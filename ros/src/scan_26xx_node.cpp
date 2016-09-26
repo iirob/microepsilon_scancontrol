@@ -32,11 +32,12 @@ private:
 	ros::Rate rate_;
 	// laser data
 	Scanner26xx laser_;
+	int last_second_;
 	
 	// published data
 	sensor_msgs::PointCloud2 cloud_msg_;
 	// parameters
-	ros::Time shutter_close_sync_;
+	ros::Duration shutter_close_sync_;
 };
 
 Scanner26xxNode::Scanner26xxNode() :rate_(1000), laser_(this)
@@ -49,7 +50,8 @@ Scanner26xxNode::Scanner26xxNode() :rate_(1000), laser_(this)
 void Scanner26xxNode::sync_time(unsigned int profile_counter, double shutter_open, double shutter_close)
 {
 	ROS_DEBUG("New Timestamp: %d %9f",profile_counter,shutter_close);
-	shutter_close_sync_ = ros::Time(shutter_close);
+	shutter_close_sync_ = ros::Time::now() - ros::Time(shutter_close);
+	last_second_ = 0;
 }
 
 
@@ -83,13 +85,14 @@ void Scanner26xxNode::publish()
 		sensor_msgs::PointCloud2Iterator<float> iter_y(cloud_msg_, "y");
 		ScanProfileConvertedPtr data = laser_.getData();
 		ros::Time profile_time(data->shutter_close);
-		ros::Duration time_diff = profile_time - shutter_close_sync_;
-		if(time_diff < ros::Duration(0))
+		if(profile_time.toSec() - last_second_ < 0)
 		{
-			time_diff += ros::Duration(128);
+			shutter_close_sync_ += ros::Duration(128);
 		}
-		cloud_msg_.header.stamp = ros::Time::now() + time_diff;
+		last_second_ = profile_time.toSec();
+		cloud_msg_.header.stamp = profile_time + shutter_close_sync_;
 		++cloud_msg_.header.seq;
+		ROS_DEBUG_STREAM(profile_time << " " << cloud_msg_.header.stamp);
 		sensor_msgs::PointCloud2Modifier modifier(cloud_msg_);
 		modifier.resize(data->x.size());
 		for(int i = 0; i < data->x.size(); ++i, ++iter_x, ++iter_z, ++iter_y)

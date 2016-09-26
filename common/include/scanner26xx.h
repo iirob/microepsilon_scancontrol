@@ -42,6 +42,7 @@ class Scanner26xx
 private:
 	bool scanning_;
 	bool connected_;
+	bool need_time_sync_;
 	
 	unsigned int idle_time_;
 	unsigned int shutter_time_;

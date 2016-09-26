@@ -216,7 +216,11 @@ void Scanner26xx::new_profile_callback (const void * data, size_t data_size)
 	double shutter_open;
 	double shutter_close;
 	Timestamp2TimeAndCount(container_buffer_[container_buffer_.size()-1].timestamp, &shutter_open, &shutter_close, &profile_counter);
-	time_sync_->sync_time(profile_counter,shutter_open,shutter_close);
+	if(need_time_sync_)
+	{
+		time_sync_->sync_time(profile_counter,shutter_open,shutter_close);
+		need_time_sync_ = false;
+	}
 	for(int i = 0; i < container_buffer_.size(); ++i)
 	{
 		ScanProfileConvertedPtr profile (new ScanProfileConverted);
@@ -266,6 +270,7 @@ ScanProfileConvertedPtr Scanner26xx::getData()
 
 bool Scanner26xx::startScanning()
 {
+	need_time_sync_ = true;
 	if(!connected_)
 	{
 		return false;
@@ -357,7 +362,7 @@ Scanner26xx::Scanner26xx(TimeSync* time_sync) : time_sync_(time_sync)
 {
 	connected_ = false;
 	scanning_  = false;
-	container_size_ = 100;
+	container_size_ = 1;
 	idle_time_ = 100;
 	shutter_time_ = 400;
 	fieldCount_ = 3;
