@@ -1,17 +1,17 @@
 #include "ros/ros.h"
 #include "scanner26xx.h"
 #include "../../../cob_driver/cob_sick_lms1xx/common/include/lms1xx.h"
-#include <signal.h>
+// #include <signal.h>
 #include "sensor_msgs/PointCloud2.h"
 #include <sensor_msgs/point_cloud2_iterator.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 
-sig_atomic_t volatile g_request_shutdown = 0;
-void mySigIntHandler(int sig)
-{
-	g_request_shutdown = 1;
-}
+// sig_atomic_t volatile g_request_shutdown = 0;
+// void mySigIntHandler(int sig)
+// {
+// 	g_request_shutdown = 1;
+// }
 
 class Scanner26xxNode : public TimeSync, Notifyee
 {
@@ -142,8 +142,9 @@ bool Scanner26xxNode::reconnect()
 //#### main programm ####
 int main(int argc, char** argv)
 {
-	ros::init(argc, argv, "scan_26xx_node", ros::init_options::NoSigintHandler);
-	signal(SIGINT, mySigIntHandler);
+	ros::init(argc, argv, "scan_26xx_node");
+// 	ros::init(argc, argv, "scan_26xx_node", ros::init_options::NoSigintHandler);
+// 	signal(SIGINT, mySigIntHandler);
 
 	
 	ros::NodeHandle nh_private("~");
@@ -178,12 +179,11 @@ int main(int argc, char** argv)
 	ROS_INFO("Started scanning.");
 	
 // 	int a = 0;
-	ros::Rate rate(1000);
-	tf::TransformBroadcaster tf_bc;
-	tf::TransformListener tf_li;
-	while(!g_request_shutdown)
-	{
-		//scanner.publish();
+// 	ros::Rate rate(1000);
+// 	tf::TransformBroadcaster tf_bc;
+// 	tf::TransformListener tf_li;
+// 	while(!g_request_shutdown)
+// 	{
 		
 // 		if(scanner.hasNewData())
 // 		{
@@ -198,44 +198,42 @@ int main(int argc, char** argv)
 // 			}
 // 			a++;
 // 		}
-		static tf::StampedTransform st_transform_last_loop;
-		static tf::StampedTransform st_transform_T_1;
-		tf::StampedTransform st_transform;
-		try
-		{
-			tf_li.lookupTransform("world","force_tool_base_link",ros::Time(0),st_transform);
-			if(st_transform == st_transform_last_loop)
-			{
-				ros::Duration delta_t = st_transform.stamp_ - st_transform_T_1.stamp_;
-				ros::Duration delta_t_now = ros::Time::now() - st_transform.stamp_;
-				double time_ratio = delta_t_now.toSec() / delta_t.toSec();
-				
-				tf::Vector3 new_vec3 = st_transform_T_1.getOrigin().lerp(st_transform.getOrigin(),1.0+time_ratio);
-				tf::Quaternion new_quat = st_transform_T_1.getRotation().slerp(st_transform.getRotation(),1.0+time_ratio);
-				tf::Transform transform;
-				transform.setOrigin(new_vec3);
-				transform.setRotation(new_quat);
-				tf_bc.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "extrapolated_force_tool_base_link"));
-			}
-			else
-			{		
-				st_transform_T_1 = st_transform_last_loop;
-			}
-			st_transform_last_loop = st_transform;
-		}
-		catch(const tf2::LookupException& e)
-		{
-			;
-		}
- 		ros::spinOnce();
-		rate.sleep();
-		
-	}
+// 		static tf::StampedTransform st_transform_last_loop;
+// 		static tf::StampedTransform st_transform_T_1;
+// 		tf::StampedTransform st_transform;
+// 		try
+// 		{
+// 			tf_li.lookupTransform("world","force_tool_base_link",ros::Time(0),st_transform);
+// 			if(st_transform == st_transform_last_loop)
+// 			{
+// 				ros::Duration delta_t = st_transform.stamp_ - st_transform_T_1.stamp_;
+// 				ros::Duration delta_t_now = ros::Time::now() - st_transform.stamp_;
+// 				double time_ratio = delta_t_now.toSec() / delta_t.toSec();
+// 				
+// 				tf::Vector3 new_vec3 = st_transform_T_1.getOrigin().lerp(st_transform.getOrigin(),1.0+time_ratio);
+// 				tf::Quaternion new_quat = st_transform_T_1.getRotation().slerp(st_transform.getRotation(),1.0+time_ratio);
+// 				tf::Transform transform;
+// 				transform.setOrigin(new_vec3);
+// 				transform.setRotation(new_quat);
+// 				tf_bc.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "extrapolated_force_tool_base_link"));
+// 			}
+// 			else
+// 			{		
+// 				st_transform_T_1 = st_transform_last_loop;
+// 			}
+// 			st_transform_last_loop = st_transform;
+// 		}
+// 		catch(const tf2::TransformException& e)
+// 		{
+// 			;
+// 		}
+//  		ros::spinOnce();
+// 		rate.sleep();
+// 		
+// 	}
+	ros::spin();
 	scanner.stopScanning();
-	//scanner.setLaserPower(false);
-	//sleep(1);
-// 	node.stopScanner();
 	
-	ros::shutdown();
+// 	ros::shutdown();
 	return 0;
 }
