@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(scan_26xx)
 
-find_package(catkin REQUIRED COMPONENTS diagnostic_msgs roscpp sensor_msgs)
+find_package(catkin REQUIRED COMPONENTS diagnostic_msgs roscpp sensor_msgs tf)
 
 find_package(Boost REQUIRED)
 

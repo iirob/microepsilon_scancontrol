@@ -206,64 +206,64 @@ void DisplayTimestamp (unsigned char * uiTimestamp)
 }
 void Scanner26xx::new_profile_callback (const void * data, size_t data_size)
 {
-	mutex_.lock();
-	if(data != NULL && data_size == scanner_resolution*fieldCount_* container_size_*2)
 	{
-		memcpy(&container_buffer_[0],data,data_size);
-	}
-	
-	unsigned int profile_counter;
-	double shutter_open;
-	double shutter_close;
-	Timestamp2TimeAndCount(container_buffer_[container_buffer_.size()-1].timestamp, &shutter_open, &shutter_close, &profile_counter);
-	if(need_time_sync_)
-	{
-		time_sync_->sync_time(profile_counter,shutter_open,shutter_close);
-		need_time_sync_ = false;
-	}
-	for(int i = 0; i < container_buffer_.size(); ++i)
-	{
-		ScanProfileConvertedPtr profile (new ScanProfileConverted);
-		Timestamp2TimeAndCount(container_buffer_[i].timestamp, &profile->shutter_open, &profile->shutter_close, &profile->profile_counter);
-		//DisplayTimestamp(container_buffer_[i].timestamp);
-		for(int j = 0; j < scanner_resolution; ++j)
+		boost::mutex::scoped_lock lock(mutex_);
+		if(data != NULL && data_size == scanner_resolution*fieldCount_* container_size_*2)
 		{
-			if(container_buffer_[i].z[j] != 0)
-			{
-				double x = ((container_buffer_[i].x[j] - (guint16)32768) * llt_.appData.scaling) / 1000.0; //in meter
-				double z = ((container_buffer_[i].z[j] - (guint16)32768) * llt_.appData.scaling + llt_.appData.offset) / 1000.0; //in meter
-				profile->x.push_back(x);
-				profile->z.push_back(z);
-			}
+			memcpy(&container_buffer_[0],data,data_size);
 		}
 		
-		profile_queue_.push(profile);
-		
+		unsigned int profile_counter;
+		double shutter_open;
+		double shutter_close;
+		Timestamp2TimeAndCount(container_buffer_[container_buffer_.size()-1].timestamp, &shutter_open, &shutter_close, &profile_counter);
+		if(need_time_sync_)
+		{
+			time_sync_->sync_time(profile_counter,shutter_open,shutter_close);
+			need_time_sync_ = false;
+		}
+		for(int i = 0; i < container_buffer_.size(); ++i)
+		{
+			ScanProfileConvertedPtr profile (new ScanProfileConverted);
+			Timestamp2TimeAndCount(container_buffer_[i].timestamp, &profile->shutter_open, &profile->shutter_close, &profile->profile_counter);
+			//DisplayTimestamp(container_buffer_[i].timestamp);
+			for(int j = 0; j < scanner_resolution; ++j)
+			{
+				if(container_buffer_[i].z[j] != 0)
+				{
+					double x = ((container_buffer_[i].x[j] - (guint16)32768) * llt_.appData.scaling) / 1000.0; //in meter
+					double z = ((container_buffer_[i].z[j] - (guint16)32768) * llt_.appData.scaling + llt_.appData.offset) / 1000.0; //in meter
+					profile->x.push_back(x);
+					profile->z.push_back(z);
+				}
+			}
+			
+			profile_queue_.push(profile);
+			
+		}
 	}
-	mutex_.unlock();
+	notifyee_->notify();
+	
 }
 
 bool Scanner26xx::hasNewData()
 {
-	mutex_.lock();
+	boost::mutex::scoped_lock lock(mutex_);
 	bool ret = !profile_queue_.empty();
-	mutex_.unlock();
 	return ret;
 }
 
 ScanProfileConvertedPtr Scanner26xx::getData()
 {
-	mutex_.lock();
+	boost::mutex::scoped_lock lock(mutex_);
 	ScanProfileConvertedPtr ptr;
 	if(profile_queue_.empty())
 	{
-		mutex_.unlock();
 		return ptr;
 	}
 	
 	ptr = profile_queue_.front();
 	profile_queue_.pop();
-	mutex_.unlock();
 	return ptr;	
 }
 
@@ -358,13 +358,11 @@ bool Scanner26xx::stopScanning()
 
 
 
-Scanner26xx::Scanner26xx(TimeSync* time_sync) : time_sync_(time_sync)
+Scanner26xx::Scanner26xx(TimeSync* time_sync,Notifyee* notifyee,unsigned int shutter_time, unsigned int idle_time, unsigned int container_size) 
+				: time_sync_(time_sync), notifyee_(notifyee), shutter_time_(shutter_time), idle_time_(idle_time), container_size_(container_size)
 {
 	connected_ = false;
 	scanning_  = false;
-	container_size_ = 1;
-	idle_time_ = 100;
-	shutter_time_ = 400;
 	fieldCount_ = 3;
 	container_buffer_.resize(container_size_);
 	

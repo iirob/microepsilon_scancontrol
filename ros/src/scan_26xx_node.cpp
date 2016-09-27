@@ -1,8 +1,11 @@
 #include "ros/ros.h"
 #include "scanner26xx.h"
+#include "../../../cob_driver/cob_sick_lms1xx/common/include/lms1xx.h"
 #include <signal.h>
 #include "sensor_msgs/PointCloud2.h"
 #include <sensor_msgs/point_cloud2_iterator.h>
+#include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
 
 sig_atomic_t volatile g_request_shutdown = 0;
 void mySigIntHandler(int sig)
@@ -10,26 +13,26 @@ void mySigIntHandler(int sig)
 	g_request_shutdown = 1;
 }
 
-class Scanner26xxNode : public TimeSync
+class Scanner26xxNode : public TimeSync, Notifyee
 {
 public:
 	
-	Scanner26xxNode();
+	Scanner26xxNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size);
 	
 	void publish();
 	bool startScanning();
 	bool stopScanning();
 	bool reconnect();
-	void sync_time(unsigned int profile_counter,double shutter_open,double shutter_close);
-	
+	virtual void sync_time(unsigned int profile_counter,double shutter_open,double shutter_close);
+	virtual void notify();
 	
 private:
 	
 	void initialiseMessage();
 	
+
 	ros::Publisher scan_pub_;
 	ros::NodeHandle nh_;
-	ros::Rate rate_;
 	// laser data
 	Scanner26xx laser_;
 	int last_second_;
@@ -40,7 +43,7 @@ private:
 	ros::Duration shutter_close_sync_;
 };
 
-Scanner26xxNode::Scanner26xxNode() :rate_(1000), laser_(this)
+Scanner26xxNode::Scanner26xxNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size) : laser_(this,this,shutter_time,idle_time,container_size)
 {
 	scan_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("laser_scan",500);
 	initialiseMessage();
@@ -54,10 +57,16 @@ void Scanner26xxNode::sync_time(unsigned int profile_counter, double shutter_ope
 	last_second_ = 0;
 }
 
+void Scanner26xxNode::notify()
+{
+	publish();
+}
+
+
 
 void Scanner26xxNode::initialiseMessage()
 {
-	cloud_msg_.header.frame_id = "/scanner_link";
+	cloud_msg_.header.frame_id = "arm_scanner_link";
 	cloud_msg_.is_bigendian = false;
 	cloud_msg_.is_dense = true;
 	cloud_msg_.height = 1;
@@ -78,7 +87,7 @@ void Scanner26xxNode::initialiseMessage()
 void Scanner26xxNode::publish()
 {
 	
-	if(laser_.hasNewData())
+	while(laser_.hasNewData())
 	{
 		sensor_msgs::PointCloud2Iterator<float> iter_x(cloud_msg_, "x");
 		sensor_msgs::PointCloud2Iterator<float> iter_z(cloud_msg_, "z");
@@ -110,7 +119,7 @@ void Scanner26xxNode::publish()
 // 			ROS_INFO("X: %10f Y: %10f Z: %10f",*iter2_x,*iter2_y,*iter2_z);
 // 		}
 	}
-	rate_.sleep();
+	
 }
 
 bool Scanner26xxNode::startScanning()
@@ -135,15 +144,30 @@ int main(int argc, char** argv)
 {
 	ros::init(argc, argv, "scan_26xx_node", ros::init_options::NoSigintHandler);
 	signal(SIGINT, mySigIntHandler);
-// 	SickLMS1xxNode node;
-// 	
-// 	if (!node.initalize()) {
-// 		return 1;
-// 	}
-// 	
-// 	node.startScanner();
+
 	
-	Scanner26xxNode scanner;
+	ros::NodeHandle nh_private("~");
+	
+	int shutter_time;
+	int idle_time;
+	int container_size;
+	if(!nh_private.getParam("shutter_time",shutter_time))
+	{
+		ROS_ERROR("You have to specify parameter shutter_time!");
+		return -1;
+	}
+	if(!nh_private.getParam("idle_time",idle_time))
+	{
+		ROS_ERROR("You have to specify parameter idle_time!");
+		return -1;
+	}
+	if(!nh_private.getParam("container_size",container_size))
+	{
+		ROS_ERROR("You have to specify parameter container_size!");
+		return -1;
+	}
+	
+	Scanner26xxNode scanner(shutter_time,idle_time,container_size);
 	bool scanning = scanner.startScanning();
 	while(!scanning)
 	{
@@ -154,9 +178,12 @@ int main(int argc, char** argv)
 	ROS_INFO("Started scanning.");
 	
 // 	int a = 0;
+	ros::Rate rate(1000);
+	tf::TransformBroadcaster tf_bc;
+	tf::TransformListener tf_li;
 	while(!g_request_shutdown)
 	{
-		scanner.publish();
+		//scanner.publish();
 		
 // 		if(scanner.hasNewData())
 // 		{
@@ -171,7 +198,37 @@ int main(int argc, char** argv)
 // 			}
 // 			a++;
 // 		}
+		static tf::StampedTransform st_transform_last_loop;
+		static tf::StampedTransform st_transform_T_1;
+		tf::StampedTransform st_transform;
+		try
+		{
+			tf_li.lookupTransform("world","force_tool_base_link",ros::Time(0),st_transform);
+			if(st_transform == st_transform_last_loop)
+			{
+				ros::Duration delta_t = st_transform.stamp_ - st_transform_T_1.stamp_;
+				ros::Duration delta_t_now = ros::Time::now() - st_transform.stamp_;
+				double time_ratio = delta_t_now.toSec() / delta_t.toSec();
+				
+				tf::Vector3 new_vec3 = st_transform_T_1.getOrigin().lerp(st_transform.getOrigin(),1.0+time_ratio);
+				tf::Quaternion new_quat = st_transform_T_1.getRotation().slerp(st_transform.getRotation(),1.0+time_ratio);
+				tf::Transform transform;
+				transform.setOrigin(new_vec3);
+				transform.setRotation(new_quat);
+				tf_bc.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "extrapolated_force_tool_base_link"));
+			}
+			else
+			{		
+				st_transform_T_1 = st_transform_last_loop;
+			}
+			st_transform_last_loop = st_transform;
+		}
+		catch(const tf2::LookupException& e)
+		{
+			;
+		}
  		ros::spinOnce();
+		rate.sleep();
 		
 	}
 	scanner.stopScanning();

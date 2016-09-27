@@ -18,6 +18,12 @@ public:
 	virtual void sync_time(unsigned int profile_counter,double shutter_open,double shutter_close) = 0;
 };
 
+class Notifyee
+{
+public:
+	virtual void notify() = 0;
+};
+
 
 struct ScanProfile
 {
@@ -50,6 +56,7 @@ private:
 	boost::mutex mutex_;
 	unsigned int fieldCount_;
 	TimeSync* time_sync_;
+	Notifyee*  notifyee_;
 
 	
 	LLT llt_;
@@ -67,7 +74,7 @@ private:
 	
 public:
 	
-	Scanner26xx(TimeSync* time_sync);
+	Scanner26xx(TimeSync* time_sync,Notifyee* notifyee,unsigned int shutter_time, unsigned int idle_time, unsigned int container_size);
 	~Scanner26xx();
 	
 	bool reconnect();

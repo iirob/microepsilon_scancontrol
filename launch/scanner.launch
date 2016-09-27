@@ -1,8 +1,12 @@
 <?xml version="1.0"?>
 <launch>
   
-  <node name="scan_26xx_node" pkg="scan_26xx" type="scan_26xx_node" cwd="node" respawn="true" output="screen"/>
-
+  <node ns = "arm" name="scan_26xx_node" pkg="scan_26xx" type="scan_26xx_node" cwd="node" respawn="true" output="screen">
+	  <param name="shutter_time" type="int" value="400"/>
+	  <param name="idle_time" type="int" value="1600"/>
+	  <param name="container_size" type="int" value="1"/>
+  </node>
+  <node pkg="tf" type="static_transform_publisher" name="scanner_broadcaster" args="0.05 0.09 0.1 -1.57079632679 0 0 force_tool_base_link arm_scanner_link 10" />
 
 
 </launch>
