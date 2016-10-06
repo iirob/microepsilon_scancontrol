@@ -7,17 +7,23 @@
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 
+
 // sig_atomic_t volatile g_request_shutdown = 0;
 // void mySigIntHandler(int sig)
 // {
 // 	g_request_shutdown = 1;
 // }
 
+double average(double a, double b)
+{
+	return (a+b)/2.0;
+}
+
 class Scanner26xxNode : public TimeSync, Notifyee
 {
 public:
 	
-	Scanner26xxNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size);
+	Scanner26xxNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size,double lag_compensation);
 	
 	void publish();
 	bool startScanning();
@@ -36,14 +42,15 @@ private:
 	// laser data
 	Scanner26xx laser_;
 	int last_second_;
-	
+	double lag_compensation_;
 	// published data
 	sensor_msgs::PointCloud2 cloud_msg_;
 	// parameters
 	ros::Duration shutter_close_sync_;
 };
 
-Scanner26xxNode::Scanner26xxNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size) : laser_(this,this,shutter_time,idle_time,container_size)
+Scanner26xxNode::Scanner26xxNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size,double lag_compensation) 
+								: laser_(this,this,shutter_time,idle_time,container_size), lag_compensation_(lag_compensation)
 {
 	scan_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("laser_scan",500);
 	initialiseMessage();
@@ -52,8 +59,8 @@ Scanner26xxNode::Scanner26xxNode(unsigned int shutter_time, unsigned int idle_ti
 
 void Scanner26xxNode::sync_time(unsigned int profile_counter, double shutter_open, double shutter_close)
 {
-	ROS_DEBUG("New Timestamp: %d %9f",profile_counter,shutter_close);
-	shutter_close_sync_ = ros::Time::now() - ros::Time(shutter_close);
+	ROS_DEBUG("New Timestamp: %d %9f",profile_counter,average(shutter_open,shutter_close));
+	shutter_close_sync_ = ros::Time::now() - ros::Time(average(shutter_open,shutter_close)) - ros::Duration(lag_compensation_);
 	last_second_ = 0;
 }
 
@@ -93,7 +100,7 @@ void Scanner26xxNode::publish()
 		sensor_msgs::PointCloud2Iterator<float> iter_z(cloud_msg_, "z");
 		sensor_msgs::PointCloud2Iterator<float> iter_y(cloud_msg_, "y");
 		ScanProfileConvertedPtr data = laser_.getData();
-		ros::Time profile_time(data->shutter_close);
+		ros::Time profile_time(average(data->shutter_open,data->shutter_close));
 		if(profile_time.toSec() - last_second_ < 0)
 		{
 			shutter_close_sync_ += ros::Duration(128);
@@ -152,6 +159,7 @@ int main(int argc, char** argv)
 	int shutter_time;
 	int idle_time;
 	int container_size;
+	double lag_compensation;
 	if(!nh_private.getParam("shutter_time",shutter_time))
 	{
 		ROS_ERROR("You have to specify parameter shutter_time!");
@@ -167,8 +175,16 @@ int main(int argc, char** argv)
 		ROS_ERROR("You have to specify parameter container_size!");
 		return -1;
 	}
+	if(!nh_private.getParam("lag_compensation",lag_compensation))
+	{
+		lag_compensation = 0.0;
+	}
+	ROS_INFO("Shutter Time: %dms Idle Time: %dms Frequency: %.2fHz",shutter_time/100,idle_time/100,100000.0/(shutter_time+idle_time));
+	ROS_INFO("Profiles for each Container: %d",container_size);
+	ROS_INFO("Lag compensation: %.3fms",lag_compensation*1000);
 	
-	Scanner26xxNode scanner(shutter_time,idle_time,container_size);
+	
+	Scanner26xxNode scanner(shutter_time,idle_time,container_size,lag_compensation);
 	bool scanning = scanner.startScanning();
 	while(!scanning)
 	{

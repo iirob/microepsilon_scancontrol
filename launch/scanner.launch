@@ -5,8 +5,9 @@
 	  <param name="shutter_time" type="int" value="400"/>
 	  <param name="idle_time" type="int" value="100"/>
 	  <param name="container_size" type="int" value="5"/>
+	  <param name="lag_compensation" type = "double" value="0.00525"/>
   </node>
-  <node pkg="tf" type="static_transform_publisher" name="scanner_broadcaster" args="0.05 0.09 0.1 -1.57079632679 0 0 force_tool_base_link arm_scanner_link 10" />
+  <node pkg="tf" type="static_transform_publisher" name="scanner_broadcaster" args="-0.09 0.05 0.11 0 0 0 force_tool_base_link arm_scanner_link 10" />
 
 
 </launch>
