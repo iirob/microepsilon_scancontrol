@@ -4,6 +4,7 @@
 // #include <signal.h>
 #include "sensor_msgs/PointCloud2.h"
 #include <sensor_msgs/point_cloud2_iterator.h>
+#include <std_msgs/Float32MultiArray.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 
@@ -38,6 +39,7 @@ private:
 	
 
 	ros::Publisher scan_pub_;
+	ros::Publisher meassured_z_pub_;
 	ros::NodeHandle nh_;
 	// laser data
 	Scanner26xx laser_;
@@ -53,6 +55,7 @@ Scanner26xxNode::Scanner26xxNode(unsigned int shutter_time, unsigned int idle_ti
 								: laser_(this,this,shutter_time,idle_time,container_size), lag_compensation_(lag_compensation)
 {
 	scan_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("laser_scan",500);
+	meassured_z_pub_ = nh_.advertise<std_msgs::Float32MultiArray>("meassured_z",50);
 	initialiseMessage();
 	ROS_INFO("Connecting to Laser");
 }
@@ -73,7 +76,7 @@ void Scanner26xxNode::notify()
 
 void Scanner26xxNode::initialiseMessage()
 {
-	cloud_msg_.header.frame_id = "arm_scanner_link";
+	cloud_msg_.header.frame_id = "measurement_tool_tcp_link";
 	cloud_msg_.is_bigendian = false;
 	cloud_msg_.is_dense = true;
 	cloud_msg_.height = 1;
@@ -118,6 +121,14 @@ void Scanner26xxNode::publish()
 			*iter_y = 0.0;
 		}
 		scan_pub_.publish(cloud_msg_);
+		std_msgs::Float32MultiArray meassured_z;
+		if(data->z.size() > 0) 
+		{
+			meassured_z.data.push_back((float)data->z[0]);
+			meassured_z.data.push_back((float)data->z[data->z.size()/2]);
+			meassured_z.data.push_back((float)data->z[data->z.size()-1]);
+			meassured_z_pub_.publish(meassured_z);
+		}
 // 		sensor_msgs::PointCloud2Iterator<float> iter2_x(cloud_msg_, "x");
 // 		sensor_msgs::PointCloud2Iterator<float> iter2_z(cloud_msg_, "z");
 // 		sensor_msgs::PointCloud2Iterator<float> iter2_y(cloud_msg_, "y");

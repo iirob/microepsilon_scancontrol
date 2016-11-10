@@ -97,13 +97,16 @@ bool Scanner26xx::initialise()
 	{
 		return false;
 	}
+	
+
+	//set to default config
+	llt_.ReadWriteUserModes(false,0);
+	
 	if (llt_.SetResolution(scanner_resolution) < GENERAL_FUNCTION_OK)
 	{
 		std::cout << "Error while setting resolution!\n";
 		return false;
 	}
-
-	llt_.ReadWriteUserModes(false,0);
 	
 	if ((llt_.SetProfileConfig(CONTAINER)) < GENERAL_FUNCTION_OK)
 	{
@@ -134,6 +137,13 @@ bool Scanner26xx::initialise()
 		std::cout << "Error while setting trigger!\n";
 		return false;
 	}
+	
+	if (llt_.SetFeature(0xfffff0f008c0, 0x82000820) < GENERAL_FUNCTION_OK)
+	{
+		std::cout << "Error while setting High Voltage!\n";
+		return false;
+	}
+	
 	int iRetValue;
 	
 	if((iRetValue = llt_.SetPacketSize(scanner_resolution)) < GENERAL_FUNCTION_OK)
