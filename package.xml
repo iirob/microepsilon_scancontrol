@@ -17,9 +17,9 @@
   <depend>diagnostic_msgs</depend>
   <depend>roscpp</depend>
   <depend>sensor_msgs</depend>
-  <depend>aravis-0.4</depend>
-  <depend>llt</depend>
-  <depend>mescan</depend>
+<!--   <depend>aravis-0.4</depend> -->
+<!--   <depend>llt</depend> -->
+<!--   <depend>mescan</depend> -->
 
 </package>
 

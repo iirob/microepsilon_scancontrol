@@ -332,6 +332,7 @@ bool Scanner26xx::startScanning()
 	}
 	
 	
+	setMeasuringField(field_.x_start,field_.x_size,field_.z_start,field_.z_size);
 	
 		
 	// Setup transfer of multiple profiles
@@ -368,8 +369,8 @@ bool Scanner26xx::stopScanning()
 
 
 
-Scanner26xx::Scanner26xx(TimeSync* time_sync,Notifyee* notifyee,unsigned int shutter_time, unsigned int idle_time, unsigned int container_size) 
-				: time_sync_(time_sync), notifyee_(notifyee), shutter_time_(shutter_time), idle_time_(idle_time), container_size_(container_size)
+Scanner26xx::Scanner26xx(TimeSync* time_sync,Notifyee* notifyee,unsigned int shutter_time, unsigned int idle_time, unsigned int container_size, MeasurementField field) 
+				: time_sync_(time_sync), notifyee_(notifyee), shutter_time_(shutter_time), idle_time_(idle_time), container_size_(container_size), field_(field)
 {
 	connected_ = false;
 	scanning_  = false;
@@ -446,4 +447,38 @@ bool Scanner26xx::setLaserPower(bool on)
 	
 	return true;
 }
+
+// Schreibkommando für seq. Register
+void Scanner26xx::WriteCommand(unsigned int command, unsigned int data)
+{
+	static int toggle = 0;
+	llt_.SetFeature(FEATURE_FUNCTION_SHARPNESS,
+					 (unsigned int)(command << 9) + (toggle << 8) + data);
+	toggle = toggle ? 0 : 1;
+}
+// Schreibe Wert auf Registerposition
+void Scanner26xx::WriteValue2Register(unsigned short value)
+{
+	WriteCommand(1, (unsigned int)(value/256));
+	WriteCommand(1, (unsigned int)(value%256));
+}
+
+
+void Scanner26xx::setMeasuringField(ushort x_start, ushort x_size, ushort z_start, ushort z_size)
+{
+
+	// Aktiviere freies Messfeld
+	llt_.SetFeature(FEATURE_FUNCTION_MEASURINGFIELD, 0x82000800);
+	// Setze die gewünschte Messfeldgröße
+
+	WriteCommand(0, 0); // Resetkommando
+	WriteCommand(0, 0);
+	WriteCommand(2, 8);
+	WriteValue2Register(z_start);
+	WriteValue2Register(z_size);
+	WriteValue2Register(x_start);
+	WriteValue2Register(x_size);
+	WriteCommand(0, 0); // Beende Schreibvorgang
+}
+
 

@@ -1,6 +1,6 @@
 #include "ros/ros.h"
 #include "scanner26xx.h"
-#include "../../../cob_driver/cob_sick_lms1xx/common/include/lms1xx.h"
+
 // #include <signal.h>
 #include "sensor_msgs/PointCloud2.h"
 #include <sensor_msgs/point_cloud2_iterator.h>
@@ -24,7 +24,7 @@ class Scanner26xxNode : public TimeSync, Notifyee
 {
 public:
 	
-	Scanner26xxNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size,double lag_compensation);
+	Scanner26xxNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size,MeasurementField field,double lag_compensation,std::string topic,std::string frame);
 	
 	void publish();
 	bool startScanning();
@@ -49,12 +49,13 @@ private:
 	sensor_msgs::PointCloud2 cloud_msg_;
 	// parameters
 	ros::Duration shutter_close_sync_;
+	std::string frame_;
 };
 
-Scanner26xxNode::Scanner26xxNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size,double lag_compensation) 
-								: laser_(this,this,shutter_time,idle_time,container_size), lag_compensation_(lag_compensation)
+Scanner26xxNode::Scanner26xxNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size,MeasurementField field,double lag_compensation,std::string topic,std::string frame) 
+								: laser_(this,this,shutter_time,idle_time,container_size,field), lag_compensation_(lag_compensation),frame_(frame)
 {
-	scan_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("laser_scan",500);
+	scan_pub_ = nh_.advertise<sensor_msgs::PointCloud2>(topic,500);
 	meassured_z_pub_ = nh_.advertise<std_msgs::Float32MultiArray>("meassured_z",50);
 	initialiseMessage();
 	ROS_INFO("Connecting to Laser");
@@ -76,7 +77,7 @@ void Scanner26xxNode::notify()
 
 void Scanner26xxNode::initialiseMessage()
 {
-	cloud_msg_.header.frame_id = "measurement_tool_tcp_link";
+	cloud_msg_.header.frame_id = frame_;
 	cloud_msg_.is_bigendian = false;
 	cloud_msg_.is_dense = true;
 	cloud_msg_.height = 1;
@@ -114,6 +115,12 @@ void Scanner26xxNode::publish()
 		ROS_DEBUG_STREAM(profile_time << " " << cloud_msg_.header.stamp);
 		sensor_msgs::PointCloud2Modifier modifier(cloud_msg_);
 		modifier.resize(data->x.size());
+		static bool firstrun = true;
+		if(firstrun)
+		{
+			ROS_INFO_STREAM("Points per profile: " << data->x.size());
+			firstrun = false;
+		}
 		for(int i = 0; i < data->x.size(); ++i, ++iter_x, ++iter_z, ++iter_y)
 		{
 			*iter_x = data->x[i];
@@ -171,6 +178,8 @@ int main(int argc, char** argv)
 	int idle_time;
 	int container_size;
 	double lag_compensation;
+	std::string topic, frame;
+	double field_left,field_right,field_far,field_near;
 	if(!nh_private.getParam("shutter_time",shutter_time))
 	{
 		ROS_ERROR("You have to specify parameter shutter_time!");
@@ -186,16 +195,45 @@ int main(int argc, char** argv)
 		ROS_ERROR("You have to specify parameter container_size!");
 		return -1;
 	}
+	if(!nh_private.getParam("frame",frame))
+	{
+		ROS_ERROR("You have to specify parameter frame!");
+		return -1;
+	}
+	if(!nh_private.getParam("topic",topic))
+	{
+		topic = "laser_scan";
+	}
+	if(!nh_private.getParam("field_left",field_left))
+	{
+		field_left = 0.0;
+	}
+	if(!nh_private.getParam("field_right",field_right))
+	{
+		field_right = 0.0;
+	}
+	if(!nh_private.getParam("field_far",field_far))
+	{
+		field_far = 0.0;
+	}
+	if(!nh_private.getParam("field_near",field_near))
+	{
+		field_near = 0.0;
+	}
 	if(!nh_private.getParam("lag_compensation",lag_compensation))
 	{
 		lag_compensation = 0.0;
 	}
-	ROS_INFO("Shutter Time: %dms Idle Time: %dms Frequency: %.2fHz",shutter_time/100,idle_time/100,100000.0/(shutter_time+idle_time));
+	ROS_INFO("Shutter Time: %.2fms Idle Time: %.2fms Frequency: %.2fHz",shutter_time/100.0,idle_time/100.0,100000.0/(shutter_time+idle_time));
 	ROS_INFO("Profiles for each Container: %d",container_size);
 	ROS_INFO("Lag compensation: %.3fms",lag_compensation*1000);
 	
-	
-	Scanner26xxNode scanner(shutter_time,idle_time,container_size,lag_compensation);
+	field_left = fmin(fmax(field_left,0.0),1.0);
+	field_right = fmin(fmax(field_right,0.0),1.0);
+	field_far = fmin(fmax(field_far,0.0),1.0);
+	field_near = fmin(fmax(field_near,0.0),1.0);
+	MeasurementField field(field_left,field_right,field_far,field_near);
+	Scanner26xxNode scanner(shutter_time,idle_time,container_size,field,lag_compensation,topic,frame);
 	bool scanning = scanner.startScanning();
 	while(!scanning)
 	{
