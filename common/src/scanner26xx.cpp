@@ -15,6 +15,7 @@ bool Scanner26xx::connect()
 	std::vector<unsigned int> vuiResolutions(10);
 	unsigned int uiInterfaceCount = 0;		
 
+	int activeDevice = 0;
 	
 	int iRetValue = GetDeviceInterfaces(&vcInterfaces[0], vcInterfaces.size());
 	if (iRetValue == ERROR_GETDEVINTERFACE_REQUEST_COUNT)
@@ -28,14 +29,32 @@ bool Scanner26xx::connect()
 		uiInterfaceCount = 0;
 	} else {
 		uiInterfaceCount = iRetValue;
+		if (uiInterfaceCount == 0)
+			std::cout << "There is no scanCONTROL connected \n";
+		else if (uiInterfaceCount == 1)
+			std::cout << "There is 1 scanCONTROL connected \n";
+		else
+			std::cout << "There are " << uiInterfaceCount << " scanCONTROL connected \n";
+		bool foundSN = false;
+		for(int i = 0; i < uiInterfaceCount; ++i)
+		{
+			std::cout << vcInterfaces[i] << std::endl;
+			std::string tempStr = vcInterfaces[i];
+			if(serial_number_.size() != 0 && tempStr.compare(tempStr.size() - serial_number_.size(),serial_number_.size(),serial_number_) == 0)
+			{
+				std::cout << "Found Device with serial number: " << serial_number_ << std::endl;
+				foundSN = true;
+				activeDevice = i;
+				break;
+			}
+		}
+		if(!foundSN && serial_number_.size() != 0)
+		{
+			std::cout << "Could not find device with S/N: " << serial_number_ << ". Using first device in list." << std::endl;
+		}
 	}
 	
-	if (uiInterfaceCount == 0)
-		std::cout << "There is no scanCONTROL connected \n";
-	else if (uiInterfaceCount == 1)
-		std::cout << "There is 1 scanCONTROL connected \n";
-	else
-		std::cout << "There are " << uiInterfaceCount << " scanCONTROL connected \n";
+	
 	
 	
 	
@@ -46,8 +65,8 @@ bool Scanner26xx::connect()
 	}
 	
 	
-	
-	if ((llt_.SetDeviceInterface(vcInterfaces[0])) < GENERAL_FUNCTION_OK)
+	std::cout << "Connecting to " << vcInterfaces[activeDevice] << std::endl;
+	if ((llt_.SetDeviceInterface(vcInterfaces[activeDevice])) < GENERAL_FUNCTION_OK)
 	{
 		std::cout << "Error while setting dev id " << iRetValue <<"!\n";
 		return false;
@@ -70,6 +89,18 @@ bool Scanner26xx::connect()
 	{
 		std::cout << "Can't decode scanCONTROL type. Please contact Micro Epsilon for a newer version of the library.\n";
 	}
+// 	std::cout << llt_.deviceData.device_series << std::endl;
+// 	std::cout << llt_.deviceData.scaling << std::endl;
+// 	std::cout << llt_.deviceData.offset << std::endl;
+// 	std::cout << llt_.deviceData.max_packet_size << std::endl;
+// 	std::cout << llt_.deviceData.max_frequency << std::endl;
+// 	std::cout << llt_.deviceData.post_proc << std::endl;
+// 	std::cout << llt_.deviceData.min_x_display << std::endl;
+// 	std::cout << llt_.deviceData.max_x_display << std::endl;
+// 	std::cout << llt_.deviceData.min_y_display << std::endl;
+// 	std::cout << llt_.deviceData.max_y_display << std::endl;
+// 	std::cout << llt_.deviceData.rotate_image << std::endl;
+// 	std::cout << llt_.deviceData.min_width << std::endl;
 	
 	if(m_tscanCONTROLType == scanCONTROL27xx_xxx)
 	{
@@ -114,7 +145,7 @@ bool Scanner26xx::initialise()
 		return false;
 	}
 	
-	if ((llt_.SetBufferCount(10)) < GENERAL_FUNCTION_OK)
+	if ((llt_.SetBufferCount(4)) < GENERAL_FUNCTION_OK)
 	{
 		std::cout << "Error while setting BufferCount!\n";
 		return false;
@@ -138,6 +169,7 @@ bool Scanner26xx::initialise()
 		return false;
 	}
 	
+	//Setting High Voltage mode
 	if (llt_.SetFeature(0xfffff0f008c0, 0x82000820) < GENERAL_FUNCTION_OK)
 	{
 		std::cout << "Error while setting High Voltage!\n";
@@ -369,8 +401,8 @@ bool Scanner26xx::stopScanning()
 
 
 
-Scanner26xx::Scanner26xx(TimeSync* time_sync,Notifyee* notifyee,unsigned int shutter_time, unsigned int idle_time, unsigned int container_size, MeasurementField field) 
-				: time_sync_(time_sync), notifyee_(notifyee), shutter_time_(shutter_time), idle_time_(idle_time), container_size_(container_size), field_(field)
+Scanner26xx::Scanner26xx(TimeSync* time_sync,Notifyee* notifyee,unsigned int shutter_time, unsigned int idle_time, unsigned int container_size, MeasurementField field,std::string serial_number) 
+: time_sync_(time_sync), notifyee_(notifyee), shutter_time_(shutter_time), idle_time_(idle_time), container_size_(container_size), field_(field),serial_number_(serial_number)
 {
 	connected_ = false;
 	scanning_  = false;

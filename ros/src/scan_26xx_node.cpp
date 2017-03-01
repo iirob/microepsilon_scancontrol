@@ -7,6 +7,7 @@
 #include <std_msgs/Float32MultiArray.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
+#include <std_srvs/Empty.h>
 
 
 // sig_atomic_t volatile g_request_shutdown = 0;
@@ -24,7 +25,7 @@ class Scanner26xxNode : public TimeSync, Notifyee
 {
 public:
 	
-	Scanner26xxNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size,MeasurementField field,double lag_compensation,std::string topic,std::string frame);
+	Scanner26xxNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size,MeasurementField field,double lag_compensation,std::string topic,std::string frame,std::string serial_number);
 	
 	void publish();
 	bool startScanning();
@@ -36,10 +37,13 @@ public:
 private:
 	
 	void initialiseMessage();
+	bool laser_on(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res);
+	bool laser_off(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res);
 	
-
 	ros::Publisher scan_pub_;
 	ros::Publisher meassured_z_pub_;
+	ros::ServiceServer laser_on_, laser_off_;
+	
 	ros::NodeHandle nh_;
 	// laser data
 	Scanner26xx laser_;
@@ -50,13 +54,17 @@ private:
 	// parameters
 	ros::Duration shutter_close_sync_;
 	std::string frame_;
+	bool publishing_;
 };
 
-Scanner26xxNode::Scanner26xxNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size,MeasurementField field,double lag_compensation,std::string topic,std::string frame) 
-								: laser_(this,this,shutter_time,idle_time,container_size,field), lag_compensation_(lag_compensation),frame_(frame)
+Scanner26xxNode::Scanner26xxNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size,MeasurementField field,double lag_compensation,std::string topic,std::string frame,std::string serial_number) 
+								: laser_(this,this,shutter_time,idle_time,container_size,field,serial_number), lag_compensation_(lag_compensation),frame_(frame)
 {
 	scan_pub_ = nh_.advertise<sensor_msgs::PointCloud2>(topic,500);
 	meassured_z_pub_ = nh_.advertise<std_msgs::Float32MultiArray>("meassured_z",50);
+	laser_off_ = nh_.advertiseService("/arm/laser_off",&Scanner26xxNode::laser_off,this);
+	laser_on_ = nh_.advertiseService("/arm/laser_on",&Scanner26xxNode::laser_on,this);
+	publishing_ = true;
 	initialiseMessage();
 	ROS_INFO("Connecting to Laser");
 }
@@ -73,6 +81,16 @@ void Scanner26xxNode::notify()
 	publish();
 }
 
+bool Scanner26xxNode::laser_off(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res)
+{
+	publishing_ = false;
+	return laser_.setLaserPower(false);
+}
+bool Scanner26xxNode::laser_on(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res)
+{
+	publishing_ = true;
+	return laser_.setLaserPower(true);
+}
 
 
 void Scanner26xxNode::initialiseMessage()
@@ -110,31 +128,34 @@ void Scanner26xxNode::publish()
 			shutter_close_sync_ += ros::Duration(128);
 		}
 		last_second_ = profile_time.toSec();
-		cloud_msg_.header.stamp = profile_time + shutter_close_sync_;
-		++cloud_msg_.header.seq;
-		ROS_DEBUG_STREAM(profile_time << " " << cloud_msg_.header.stamp);
-		sensor_msgs::PointCloud2Modifier modifier(cloud_msg_);
-		modifier.resize(data->x.size());
-		static bool firstrun = true;
-		if(firstrun)
+		if(publishing_)
 		{
-			ROS_INFO_STREAM("Points per profile: " << data->x.size());
-			firstrun = false;
-		}
-		for(int i = 0; i < data->x.size(); ++i, ++iter_x, ++iter_z, ++iter_y)
-		{
-			*iter_x = data->x[i];
-			*iter_z = data->z[i];
-			*iter_y = 0.0;
-		}
-		scan_pub_.publish(cloud_msg_);
-		std_msgs::Float32MultiArray meassured_z;
-		if(data->z.size() > 0) 
-		{
-			meassured_z.data.push_back((float)data->z[0]);
-			meassured_z.data.push_back((float)data->z[data->z.size()/2]);
-			meassured_z.data.push_back((float)data->z[data->z.size()-1]);
-			meassured_z_pub_.publish(meassured_z);
+			cloud_msg_.header.stamp = profile_time + shutter_close_sync_;
+			++cloud_msg_.header.seq;
+			ROS_DEBUG_STREAM(profile_time << " " << cloud_msg_.header.stamp);
+			sensor_msgs::PointCloud2Modifier modifier(cloud_msg_);
+			modifier.resize(data->x.size());
+			static bool firstrun = true;
+			if(firstrun)
+			{
+				ROS_INFO_STREAM("Points per profile: " << data->x.size());
+				firstrun = false;
+			}
+			for(int i = 0; i < data->x.size(); ++i, ++iter_x, ++iter_z, ++iter_y)
+			{
+				*iter_x = data->x[i];
+				*iter_z = data->z[i];
+				*iter_y = 0.0;
+			}
+			scan_pub_.publish(cloud_msg_);
+			std_msgs::Float32MultiArray meassured_z;
+			if(data->z.size() > 0) 
+			{
+				meassured_z.data.push_back((float)data->z[0]);
+				meassured_z.data.push_back((float)data->z[data->z.size()/2]);
+				meassured_z.data.push_back((float)data->z[data->z.size()-1]);
+				meassured_z_pub_.publish(meassured_z);
+			}
 		}
 // 		sensor_msgs::PointCloud2Iterator<float> iter2_x(cloud_msg_, "x");
 // 		sensor_msgs::PointCloud2Iterator<float> iter2_z(cloud_msg_, "z");
@@ -178,7 +199,7 @@ int main(int argc, char** argv)
 	int idle_time;
 	int container_size;
 	double lag_compensation;
-	std::string topic, frame;
+	std::string topic, frame, serial_number;
 	double field_left,field_right,field_far,field_near;
 	if(!nh_private.getParam("shutter_time",shutter_time))
 	{
@@ -203,6 +224,10 @@ int main(int argc, char** argv)
 	if(!nh_private.getParam("topic",topic))
 	{
 		topic = "laser_scan";
+	}
+	if(!nh_private.getParam("serial_number",serial_number))
+	{
+		serial_number = "";
 	}
 	if(!nh_private.getParam("field_left",field_left))
 	{
@@ -233,7 +258,7 @@ int main(int argc, char** argv)
 	field_far = fmin(fmax(field_far,0.0),1.0);
 	field_near = fmin(fmax(field_near,0.0),1.0);
 	MeasurementField field(field_left,field_right,field_far,field_near);
-	Scanner26xxNode scanner(shutter_time,idle_time,container_size,field,lag_compensation,topic,frame);
+	Scanner26xxNode scanner(shutter_time,idle_time,container_size,field,lag_compensation,topic,frame,serial_number);
 	bool scanning = scanner.startScanning();
 	while(!scanning)
 	{

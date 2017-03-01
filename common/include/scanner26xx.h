@@ -86,6 +86,7 @@ private:
 	TimeSync* time_sync_;
 	Notifyee*  notifyee_;
 	MeasurementField field_;
+	std::string serial_number_;
 	
 	LLT llt_;
 	
@@ -105,7 +106,7 @@ private:
 	
 public:
 	
-	Scanner26xx(TimeSync* time_sync,Notifyee* notifyee,unsigned int shutter_time, unsigned int idle_time, unsigned int container_size,MeasurementField field);
+	Scanner26xx(TimeSync* time_sync,Notifyee* notifyee,unsigned int shutter_time, unsigned int idle_time, unsigned int container_size,MeasurementField field,std::string serial_number);
 	~Scanner26xx();
 	
 	bool reconnect();
