@@ -5,12 +5,12 @@
 	  <param name="shutter_time" type="int" value="190"/>
 	  <param name="idle_time" type="int" value="10"/>
 	  <param name="container_size" type="int" value="50"/>
-	  <param name="lag_compensation" type="double" value="0.002"/>
+	  <param name="lag_compensation" type="double" value="0.001"/>
 	  <param name="topic" type="string" value="laser_scan"/>
 	  <param name="frame" type="string" value="mill_tool_tcp_link"/>
-	  <param name="field_left" type="double" value="0.25"/>
-	  <param name="field_right" type="double" value="0.25"/>
-	  <param name="field_far" type="double" value="0.1"/>
+	  <param name="field_left" type="double" value="0.2"/>
+	  <param name="field_right" type="double" value="0.2"/>
+	  <param name="field_far" type="double" value="0.2"/>
 	  <param name="field_near" type="double" value="0.0"/>
 	  <param name="serial_number" type="string" value="216090134"/>
   </node>
