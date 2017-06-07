@@ -13,6 +13,7 @@
 	  <param name="field_far" type="double" value="0.2"/>
 	  <param name="field_near" type="double" value="0.0"/>
 	  <param name="serial_number" type="string" value="216090134"/>
+          <param name="path_to_device_properties" type="string" value="~/scanControl"/>
   </node>
 <!--  <node pkg="tf" type="static_transform_publisher" name="scanner_broadcaster" args="-0.09 0.05 0.11 0 0 0 force_tool_base_link arm_scanner_link 10" />-->
 

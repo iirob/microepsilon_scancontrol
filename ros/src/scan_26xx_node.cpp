@@ -1,3 +1,42 @@
+/*****************************************************************************
+ *
+ * Copyright 2016 Intelligent Industrial Robotics (IIROB) Group, 
+ * Institute for Anthropomatics and Robotics (IAR) - 
+ * Intelligent Process Control and Robotics (IPR), 
+ * Karlsruhe Institute of Technology (KIT)
+ *
+ * Author: Dennis Hartmann, email: dennis.hartmann@kit.edu
+ *
+ * Date of creation: 2016
+ *
+ * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ *
+ * Redistribution and use in source and binary forms,
+ * with or without modification, are permitted provided
+ * that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of the copyright holder nor the names of its
+ *       contributors may be used to endorse or promote products derived from
+ *       this software without specific prior written permission.
+ *
+ * This package is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This package is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this package. If not, see <http://www.gnu.org/licenses/>.
+*****************************************************************************/
 #include "ros/ros.h"
 #include "scanner26xx.h"
 
@@ -25,7 +64,7 @@ class Scanner26xxNode : public TimeSync, Notifyee
 {
 public:
 	
-	Scanner26xxNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size,MeasurementField field,double lag_compensation,std::string topic,std::string frame,std::string serial_number);
+	Scanner26xxNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size,MeasurementField field,double lag_compensation,std::string topic,std::string frame,std::string serial_number,std::string path_to_device_properties);
 	
 	void publish();
 	bool startScanning();
@@ -57,8 +96,8 @@ private:
 	bool publishing_;
 };
 
-Scanner26xxNode::Scanner26xxNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size,MeasurementField field,double lag_compensation,std::string topic,std::string frame,std::string serial_number) 
-								: laser_(this,this,shutter_time,idle_time,container_size,field,serial_number), lag_compensation_(lag_compensation),frame_(frame)
+Scanner26xxNode::Scanner26xxNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size,MeasurementField field,double lag_compensation,std::string topic,std::string frame,std::string serial_number,std::string path_to_device_properties) 
+								: laser_(this,this,shutter_time,idle_time,container_size,field,serial_number,path_to_device_properties), lag_compensation_(lag_compensation),frame_(frame)
 {
 	scan_pub_ = nh_.advertise<sensor_msgs::PointCloud2>(topic,500);
 	meassured_z_pub_ = nh_.advertise<std_msgs::Float32MultiArray>("meassured_z",50);
@@ -199,7 +238,7 @@ int main(int argc, char** argv)
 	int idle_time;
 	int container_size;
 	double lag_compensation;
-	std::string topic, frame, serial_number;
+	std::string topic, frame, serial_number, path_to_device_properties;
 	double field_left,field_right,field_far,field_near;
 	if(!nh_private.getParam("shutter_time",shutter_time))
 	{
@@ -219,6 +258,11 @@ int main(int argc, char** argv)
 	if(!nh_private.getParam("frame",frame))
 	{
 		ROS_ERROR("You have to specify parameter frame!");
+		return -1;
+	}
+	if(!nh_private.getParam("frame",path_to_device_properties))
+	{
+		ROS_ERROR("You have to specify parameter path_to_device_properties!");
 		return -1;
 	}
 	if(!nh_private.getParam("topic",topic))
@@ -258,7 +302,7 @@ int main(int argc, char** argv)
 	field_far = fmin(fmax(field_far,0.0),1.0);
 	field_near = fmin(fmax(field_near,0.0),1.0);
 	MeasurementField field(field_left,field_right,field_far,field_near);
-	Scanner26xxNode scanner(shutter_time,idle_time,container_size,field,lag_compensation,topic,frame,serial_number);
+	Scanner26xxNode scanner(shutter_time,idle_time,container_size,field,lag_compensation,topic,frame,serial_number,path_to_device_properties);
 	bool scanning = scanner.startScanning();
 	while(!scanning)
 	{

@@ -1,25 +1,27 @@
 <package format="2">
   <name>scan_26xx</name>
-  <version>0.0.1</version>
+  <version>1.0.0</version>
   <description>This package publishes a PointCloud message out of a MICRO-EPSILON scanCONTROL_26xx laser scanner.
   </description>
 
   <maintainer email="dennis.hartmann@student.kit.edu">Dennis Hartmann</maintainer>
   <author>Dennis Hartmann</author>
 
-  <license>GPL,LGPL</license>
-<!--   <url type="website">http://ros.org/wiki/cob_sick_lms1xx</url> -->
+  <license>LGPL</license>
+
 
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>boost</depend>
   <depend>tf</depend>
-  <depend>diagnostic_msgs</depend>
+  <depend>glib-2.0</depend>
   <depend>roscpp</depend>
   <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
   <depend>aravis-0.4</depend>
-  <depend>llt</depend>
-  <depend>mescan</depend>
+  <depend>libllt</depend>
+  <depend>libmescan</depend>
 
 </package>
 
