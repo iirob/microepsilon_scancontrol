@@ -2,12 +2,12 @@
 <launch>
   
   <node ns = "arm" name="scan_26xx_node" pkg="scan_26xx" type="scan_26xx_node" cwd="node" respawn="true" output="screen">
-	  <param name="shutter_time" type="int" value="190"/>
-	  <param name="idle_time" type="int" value="10"/>
+	  <param name="shutter_time" type="int" value="100"/>
+	  <param name="idle_time" type="int" value="100"/>
 	  <param name="container_size" type="int" value="50"/>
 	  <param name="lag_compensation" type="double" value="0.001"/>
 	  <param name="topic" type="string" value="laser_scan"/>
-	  <param name="frame" type="string" value="mill_tool_tcp_link"/>
+	  <param name="frame" type="string" value="calibrated_sensor_tcp_link"/>
 	  <param name="field_left" type="double" value="0.2"/>
 	  <param name="field_right" type="double" value="0.2"/>
 	  <param name="field_far" type="double" value="0.2"/>

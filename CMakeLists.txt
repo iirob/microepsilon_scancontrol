@@ -8,13 +8,16 @@ find_package(Boost REQUIRED)
 
 
 
-catkin_package()
+
 
 ### BUILD ###
 include_directories(common/include common/include/libllt common/include/libmescan  /usr/local/include/aravis-0.4 /usr/include/glib-2.0 /usr/lib/x86_64-linux-gnu/glib-2.0/include /usr/include/libxml2 ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 FIND_LIBRARY(ARAVIS_LIBRARY aravis-0.4 /usr/local/lib/)
 FIND_LIBRARY(LLT_LIBRARY llt common/lib/libllt)
 FIND_LIBRARY(MESCAN_LIBRARY mescan common/lib/libmescan/)
+
+
+catkin_package()
 
 add_library(${PROJECT_NAME} common/src/scanner26xx.cpp)
 add_executable(${PROJECT_NAME}_node ros/src/scan_26xx_node.cpp)
