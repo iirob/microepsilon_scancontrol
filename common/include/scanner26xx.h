@@ -37,6 +37,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this package. If not, see <http://www.gnu.org/licenses/>.
 *****************************************************************************/
+
 #ifndef _SCANNER26XX_H_
 #define _SCANNER26XX_H_
 
