@@ -240,7 +240,7 @@ int main(int argc, char** argv)
 		ROS_ERROR("You have to specify parameter frame!");
 		return -1;
 	}
-	if(!nh_private.getParam("frame",path_to_device_properties))
+	if(!nh_private.getParam("path_to_device_properties",path_to_device_properties))
 	{
 		ROS_ERROR("You have to specify parameter path_to_device_properties!");
 		return -1;
@@ -284,7 +284,7 @@ int main(int argc, char** argv)
 	MeasurementField field(field_left,field_right,field_far,field_near);
 	Scanner26xxNode scanner(shutter_time,idle_time,container_size,field,lag_compensation,topic,frame,serial_number,path_to_device_properties);
 	bool scanning = scanner.startScanning();
-	while(!scanning)
+	while(!scanning && !ros::isShuttingDown())
 	{
 		ROS_ERROR("Couldn't start scanning. Reconnecting!");
 		scanner.reconnect();
