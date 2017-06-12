@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(scan_26xx)
 
-find_package(catkin REQUIRED COMPONENTS roscpp sensor_msgs tf std_srvs std_msgs)
+find_package(catkin REQUIRED COMPONENTS roscpp sensor_msgs std_srvs std_msgs)
 
 find_package(Boost REQUIRED)
 
@@ -19,7 +19,7 @@ FIND_LIBRARY(MESCAN_LIBRARY  mescan)
 catkin_package(
    INCLUDE_DIRS common/include /usr/local/include/libllt  /usr/local/include/libmescan
    LIBRARIES ${PROJECT_NAME} ${LLT_LIBRARY} ${MESCAN_LIBRARY}
-   CATKIN_DEPENDS roscpp sensor_msgs tf std_srvs std_msgs
+   CATKIN_DEPENDS roscpp sensor_msgs std_srvs std_msgs
    DEPENDS Boost GLIB2 ARAVIS4)
 
 add_library(${PROJECT_NAME} common/src/scanner26xx.cpp)

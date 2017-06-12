@@ -13,7 +13,6 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>boost</depend>
-  <depend>tf</depend>
   <depend>glib-2.0</depend>
   <depend>roscpp</depend>
   <depend>sensor_msgs</depend>
