@@ -13,6 +13,6 @@
 	  <param name="field_far" type="double" value="0.2"/>
 	  <param name="field_near" type="double" value="0.0"/>
 	  <param name="serial_number" type="string" value="216090134"/>
-          <param name="path_to_device_properties" type="string" value="/home/hartmann/scanControl"/>
+          <param name="path_to_device_properties" type="string" value="/opt/scanCONTROL/"/>
   </node>
 </launch>

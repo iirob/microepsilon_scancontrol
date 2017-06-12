@@ -1,6 +1,7 @@
 scan_26xx
 ==========
 
+install aravis0.4
 copy libllt.h and LLTDataTypes.h to /usr/local/include/libllt
 copy libmescan.h to /usr/local/include/libmescan
 copy libllt.so.1.0 and libmescan.so.1.0 to /usr/local/lib
