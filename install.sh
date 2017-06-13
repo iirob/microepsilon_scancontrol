@@ -1,12 +1,12 @@
 #!/bin/bash
 
-LIB_FOLDER='/usr/local/lib'
-INCLUDE_FOLDER='/usr/local/include'
-OPT_FOLDER='/opt/scanCONTROL/'
+LIB_DIR='/usr/local/lib'
+INCLUDE_DIR='/usr/local/include'
+OPT_DIR='/opt/scanCONTROL/'
 
 DEVICE='device_properties.dat'
-DEVICE_FOLDER='/examples/mescanread/'
-BIN_FOLDER='/binaries(x86_64)/'
+DEVICE_DIR='/examples/mescanread/'
+BIN_DIR='/binaries(x86_64)/'
 MESCAN='/libmescan/'
 LLT='/libllt/'
 LLT_H='libllt.h'
@@ -14,61 +14,61 @@ LLT_SO='libllt.so.1.0'
 LLT_H2='LLTDataTypes.h'
 MESCAN_H='libmescan.h'
 MESCAN_SO='libmescan.so.1.0'
-FOLDER_ERROR="You have to run ./install.sh \"/path/to/scanCONTROL/\""
+DIR_ERROR="You have to run ./install.sh \"/path/to/scanCONTROL/\""
 
-if ! [ -d $1$BIN_FOLDER$MESCAN ]
+if ! [ -d $1$BIN_DIR$MESCAN ]
 then
-    echo "Could not find $MESCAN folder in $1$BIN_FOLDER."
-    echo $FOLDER_ERROR
+    echo "Could not find $MESCAN folder in $1$BIN_DIR."
+    echo $DIR_ERROR
     exit 1
 fi
 
-if ! [ -d $1$BIN_FOLDER$LLT ]
+if ! [ -d $1$BIN_DIR$LLT ]
 then
-    echo "Could not find $LLT folder in $1$BIN_FOLDER."
-    echo $FOLDER_ERROR
+    echo "Could not find $LLT folder in $1$BIN_DIR."
+    echo $DIR_ERROR
     exit 1
 fi
 
-if ! [ -s $1$BIN_FOLDER$MESCAN$MESCAN_H ]
+if ! [ -s $1$BIN_DIR$MESCAN$MESCAN_H ]
 then
-    echo "Could not find $MESCAN_H in $1$BIN_FOLDER$MESCAN."
-    echo $FOLDER_ERROR
+    echo "Could not find $MESCAN_H in $1$BIN_DIR$MESCAN."
+    echo $DIR_ERROR
     exit 1
 fi
 
-if ! [ -s $1$BIN_FOLDER$MESCAN$MESCAN_SO ]
+if ! [ -s $1$BIN_DIR$MESCAN$MESCAN_SO ]
 then
-    echo "Could not find $MESCAN_SO in $1$BIN_FOLDER$MESCAN."
-    echo $FOLDER_ERROR
+    echo "Could not find $MESCAN_SO in $1$BIN_DIR$MESCAN."
+    echo $DIR_ERROR
     exit 1
 fi
 
-if ! [ -s $1$BIN_FOLDER$LLT$LLT_H ]
+if ! [ -s $1$BIN_DIR$LLT$LLT_H ]
 then
-    echo "Could not find $LLT_H in $1$BIN_FOLDER$LLT."
-    echo $FOLDER_ERROR
+    echo "Could not find $LLT_H in $1$BIN_DIR$LLT."
+    echo $DIR_ERROR
     exit 1
 fi
 
-if ! [ -s $1$BIN_FOLDER$LLT$LLT_H2 ]
+if ! [ -s $1$BIN_DIR$LLT$LLT_H2 ]
 then
-    echo "Could not find $LLT_H2 in $1$BIN_FOLDER$LLT."
-    echo $FOLDER_ERROR
+    echo "Could not find $LLT_H2 in $1$BIN_DIR$LLT."
+    echo $DIR_ERROR
     exit 1
 fi
 
-if ! [ -s $1$BIN_FOLDER$LLT$LLT_SO ]
+if ! [ -s $1$BIN_DIR$LLT$LLT_SO ]
 then
-    echo "Could not find $LLT_SO in $1$BIN_FOLDER$LLT."
-    echo $FOLDER_ERROR
+    echo "Could not find $LLT_SO in $1$BIN_DIR$LLT."
+    echo $DIR_ERROR
     exit 1
 fi
 
-if ! [ -s $1$DEVICE_FOLDER$DEVICE ]
+if ! [ -s $1$DEVICE_DIR$DEVICE ]
 then
-    echo "Could not find $DEVICE in $1$DEVICE_FOLDER."
-    echo $FOLDER_ERROR
+    echo "Could not find $DEVICE in $1$DEVICE_DIR."
+    echo $DIR_ERROR
     exit 1
 fi
 
@@ -91,23 +91,23 @@ make
 sudo make install
 
 echo "Creating directories need sudo rights."
-sudo mkdir -p $INCLUDE_FOLDER$MESCAN
-sudo mkdir -p $INCLUDE_FOLDER$LLT
-sudo mkdir -p $OPT_FOLDER
+sudo mkdir -p -- "$INCLUDE_DIR$MESCAN"
+sudo mkdir -p -- "$INCLUDE_DIR$LLT"
+sudo mkdir -p -- "$OPT_DIR"
 
 
-echo "Copying libs to $LIB_FOLDER, need sudo rights."
-sudo cp $1$BIN_FOLDER$MESCAN$MESCAN_SO $LIB_FOLDER
-sudo cp $1$BIN_FOLDER$LLT$LLT_SO $LIB_FOLDER
+echo "Copying libs to $LIB_DIR, need sudo rights."
+sudo cp -- "$1$BIN_DIR$MESCAN$MESCAN_SO" "$LIB_DIR"
+sudo cp -- "$1$BIN_DIR$LLT$LLT_SO" "$LIB_DIR"
 
 echo "running ldconfig to create symlinks and cache."
 sudo ldconfig
 
-echo "Copying headers to $INCLUDE_FOLDER, need sudo rights."
-sudo cp $1$BIN_FOLDER$MESCAN$MESCAN_H  $INCLUDE_FOLDER$MESCAN
-sudo cp $1$BIN_FOLDER$LLT$LLT_H  $INCLUDE_FOLDER$LLT
-sudo cp $1$BIN_FOLDER$LLT$LLT_H2 $INCLUDE_FOLDER$LLT
+echo "Copying headers to $INCLUDE_DIR, need sudo rights."
+sudo cp -- "$1$BIN_DIR$MESCAN$MESCAN_H" "$INCLUDE_DIR$MESCAN"
+sudo cp -- "$1$BIN_DIR$LLT$LLT_H" "$INCLUDE_DIR$LLT"
+sudo cp -- "$1$BIN_DIR$LLT$LLT_H2" "$INCLUDE_DIR$LLT"
 
-echo "Copying $DEVICE to $OPT_FOLDER, need sudo rights."
-sudo cp $1$DEVICE_FOLDER$DEVICE $OPT_FOLDER
+echo "Copying $DEVICE to $OPT_DIR, need sudo rights."
+sudo cp -- "$1$DEVICE_DIR$DEVICE" "$OPT_DIR"
 

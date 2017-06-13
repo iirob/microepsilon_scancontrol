@@ -12,8 +12,8 @@ pkg_check_modules (ARAVIS4 REQUIRED aravis-0.4)
 
 ### BUILD ###
 include_directories(common/include /usr/local/include/libllt  /usr/local/include/libmescan  ${ARAVIS4_INCLUDE_DIRS}  ${GLIB2_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
-FIND_LIBRARY(LLT_LIBRARY  llt)
-FIND_LIBRARY(MESCAN_LIBRARY  mescan)
+FIND_LIBRARY(LLT_LIBRARY  libllt.so.1)
+FIND_LIBRARY(MESCAN_LIBRARY  libmescan.so.1)
 
 
 catkin_package(
