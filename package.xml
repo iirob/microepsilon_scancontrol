@@ -1,7 +1,7 @@
 <package format="2">
   <name>scan_26xx</name>
   <version>1.0.0</version>
-  <description>This package publishes a PointCloud message out of a MICRO-EPSILON scanCONTROL_26xx laser scanner.
+  <description>This package publishes PointCloud2 messages of profiles meassured by a MICRO-EPSILON scanCONTROL_26xx laser scanner.
   </description>
 
   <maintainer email="dennis.hartmann@student.kit.edu">Dennis Hartmann</maintainer>
