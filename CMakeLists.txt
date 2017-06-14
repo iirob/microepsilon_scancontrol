@@ -6,21 +6,20 @@ find_package(catkin REQUIRED COMPONENTS roscpp sensor_msgs std_srvs std_msgs)
 find_package(Boost REQUIRED)
 
 find_package (PkgConfig REQUIRED)
-pkg_check_modules (GLIB2 REQUIRED glib-2.0)
 pkg_check_modules (ARAVIS4 REQUIRED aravis-0.4)
 
 
 ### BUILD ###
-include_directories(common/include /usr/local/include/libllt  /usr/local/include/libmescan  ${ARAVIS4_INCLUDE_DIRS}  ${GLIB2_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
-FIND_LIBRARY(LLT_LIBRARY  libllt.so.1)
-FIND_LIBRARY(MESCAN_LIBRARY  libmescan.so.1)
+include_directories(common/include /usr/local/include/libllt  /usr/local/include/libmescan  ${ARAVIS4_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+FIND_LIBRARY(LLT_LIBRARY  llt)
+FIND_LIBRARY(MESCAN_LIBRARY  mescan)
 
 
 catkin_package(
    INCLUDE_DIRS common/include /usr/local/include/libllt  /usr/local/include/libmescan
    LIBRARIES ${PROJECT_NAME} ${LLT_LIBRARY} ${MESCAN_LIBRARY}
    CATKIN_DEPENDS roscpp sensor_msgs std_srvs std_msgs
-   DEPENDS Boost GLIB2 ARAVIS4)
+   DEPENDS Boost ARAVIS4)
 
 add_library(${PROJECT_NAME} common/src/scanner26xx.cpp)
 add_executable(${PROJECT_NAME}_node ros/src/scan_26xx_node.cpp)
