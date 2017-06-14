@@ -94,8 +94,8 @@ Scanner26xxNode::Scanner26xxNode(unsigned int shutter_time, unsigned int idle_ti
 {
 	scan_pub_ = nh_.advertise<sensor_msgs::PointCloud2>(topic,500);
 	meassured_z_pub_ = nh_.advertise<std_msgs::Float32MultiArray>("meassured_z",50);
-	laser_off_ = nh_.advertiseService("/arm/laser_off",&Scanner26xxNode::laser_off,this);
-	laser_on_ = nh_.advertiseService("/arm/laser_on",&Scanner26xxNode::laser_on,this);
+	laser_off_ = nh_.advertiseService("laser_off",&Scanner26xxNode::laser_off,this);
+	laser_on_ = nh_.advertiseService("laser_on",&Scanner26xxNode::laser_on,this);
 	publishing_ = true;
 	initialiseMessage();
 	ROS_INFO("Connecting to Laser");
