@@ -14,6 +14,7 @@ scan_26xx
 - run 'sudo ldconfig' to create sofiles and adding libraries to cache
 - edit launch/scanner.launch to fit your need. 'path_to_device_properties' must point to a directory in which 'device_properties.dat' is located.
 
+## Launch file parameters:
 | Parameter  | Description |
 | ------------- | ------------- |
 | shutter_time  | Duration during which the shutter is open. Unit is 10 microseconds.  |
