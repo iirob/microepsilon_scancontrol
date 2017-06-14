@@ -90,8 +90,7 @@ bool Scanner26xx::connect()
 		}
 	}
 
-	
-	path_to_device_properties_ += "/device_properties.dat";
+
         if ((iRetValue = SetPathtoDeviceProperties(path_to_device_properties_.c_str())) < GENERAL_FUNCTION_OK)
 	{
 		std::cout << "Error setting device ID path\nExit program...\n";
@@ -204,7 +203,7 @@ bool Scanner26xx::initialise()
 	}
 	
 	//Setting High Voltage mode
-	if (llt_.SetFeature(0xfffff0f008c0, 0x82000820) < GENERAL_FUNCTION_OK)
+	if (llt_.SetFeature(0xf0f008c0, 0x82000820) < GENERAL_FUNCTION_OK)
 	{
 		std::cout << "Error while setting High Voltage!\n";
 		return false;
@@ -442,7 +441,8 @@ Scanner26xx::Scanner26xx(TimeSync* time_sync,Notifyee* notifyee,unsigned int shu
 	scanning_  = false;
 	fieldCount_ = 3;
 	container_buffer_.resize(container_size_);
-	path_to_device_properties_ = path_to_device_properties;
+	path_to_device_properties_ = path_to_device_properties;	
+	path_to_device_properties_ += "/device_properties.dat";
 	connect();
 	if(connected_)
 	{
