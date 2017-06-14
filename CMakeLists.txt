@@ -46,3 +46,4 @@ install(DIRECTORY common/include/
 install(DIRECTORY launch/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
   PATTERN ".svn" EXCLUDE)
+set( CMAKE_VERBOSE_MAKEFILE on )
