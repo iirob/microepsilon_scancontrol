@@ -49,7 +49,7 @@
 #include <boost/thread/mutex.hpp>
 
 
-const int scanner_resolution = 640;
+const int SCANNER_RESOLUTION = 640;
 
 
 class TimeSync 
@@ -95,9 +95,9 @@ struct MeasurementField
 
 struct ScanProfile
 {
-	guint16 z[scanner_resolution];
-	guint16 x[scanner_resolution];
-	guint16 padding[scanner_resolution-8];
+	guint16 z[SCANNER_RESOLUTION];
+	guint16 x[SCANNER_RESOLUTION];
+	guint16 padding[SCANNER_RESOLUTION-8];
 	unsigned char timestamp[16];
 };
 

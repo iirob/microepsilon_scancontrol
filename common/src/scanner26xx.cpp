@@ -166,7 +166,7 @@ bool Scanner26xx::initialise()
 	//set to default config
 	llt_.ReadWriteUserModes(false,0);
 	
-	if (llt_.SetResolution(scanner_resolution) < GENERAL_FUNCTION_OK)
+	if (llt_.SetResolution(SCANNER_RESOLUTION) < GENERAL_FUNCTION_OK)
 	{
 		std::cout << "Error while setting resolution!\n";
 		return false;
@@ -211,7 +211,7 @@ bool Scanner26xx::initialise()
 	
 	int iRetValue;
 	
-	if((iRetValue = llt_.SetPacketSize(scanner_resolution)) < GENERAL_FUNCTION_OK)
+	if((iRetValue = llt_.SetPacketSize(SCANNER_RESOLUTION)) < GENERAL_FUNCTION_OK)
 	{
 		std::cout << "Error during SetPacketSize\n" << iRetValue;
 		return false;;
@@ -283,7 +283,7 @@ void Scanner26xx::new_profile_callback (const void * data, size_t data_size)
 {
 	{
 		boost::mutex::scoped_lock lock(mutex_);
-		if(data != NULL && data_size == scanner_resolution*fieldCount_* container_size_*2)
+		if(data != NULL && data_size == SCANNER_RESOLUTION*fieldCount_* container_size_*2)
 		{
 			memcpy(&container_buffer_[0],data,data_size);
 		}
@@ -302,7 +302,7 @@ void Scanner26xx::new_profile_callback (const void * data, size_t data_size)
 			ScanProfileConvertedPtr profile (new ScanProfileConverted);
 			Timestamp2TimeAndCount(container_buffer_[i].timestamp, &profile->shutter_open, &profile->shutter_close, &profile->profile_counter);
 			//DisplayTimestamp(container_buffer_[i].timestamp);
-			for(int j = 0; j < scanner_resolution; ++j)
+			for(int j = 0; j < SCANNER_RESOLUTION; ++j)
 			{
 				if(container_buffer_[i].z[j] != 0)
 				{
@@ -390,7 +390,7 @@ bool Scanner26xx::startScanning()
 	}
 	
 	std::cout << "Set profile container size\n";
-	if((iRetValue = llt_.SetProfileContainerSize(scanner_resolution*fieldCount_, container_size_)) < GENERAL_FUNCTION_OK)
+	if((iRetValue = llt_.SetProfileContainerSize(SCANNER_RESOLUTION*fieldCount_, container_size_)) < GENERAL_FUNCTION_OK)
 	{
 		std::cout << "Error during SetProfileContainerSize";
 		return false;
