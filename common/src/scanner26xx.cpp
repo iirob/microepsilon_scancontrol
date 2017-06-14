@@ -89,10 +89,10 @@ bool Scanner26xx::connect()
 			std::cout << "Could not find device with S/N: " << serial_number_ << ". Using first device in list." << std::endl;
 		}
 	}
+
 	
-	
-	
-	if ((iRetValue = SetPathtoDeviceProperties(path_to_device_properties_.c_str())) < GENERAL_FUNCTION_OK)
+	path_to_device_properties_ += "/device_properties.dat";
+        if ((iRetValue = SetPathtoDeviceProperties(path_to_device_properties_.c_str())) < GENERAL_FUNCTION_OK)
 	{
 		std::cout << "Error setting device ID path\nExit program...\n";
 		return false;

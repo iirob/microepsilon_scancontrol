@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
   
-  <node ns = "arm" name="scan_26xx_node" pkg="scan_26xx" type="scan_26xx_node" cwd="node" respawn="false" output="screen" launch-prefix="/usr/bin/xterm -e gdb --args">
+  <node ns = "arm" name="scan_26xx_node" pkg="scan_26xx" type="scan_26xx_node" cwd="node" respawn="true" output="screen">
 	  <param name="shutter_time" type="int" value="100"/>
 	  <param name="idle_time" type="int" value="100"/>
 	  <param name="container_size" type="int" value="50"/>
@@ -13,6 +13,6 @@
 	  <param name="field_far" type="double" value="0.2"/>
 	  <param name="field_near" type="double" value="0.0"/>
 	  <param name="serial_number" type="string" value="216090134"/>
-          <param name="path_to_device_properties" type="string" value="/opt/scanCONTROL"/>
+          <param name="path_to_device_properties" type="string" value="/opt/scanCONTROL/"/>
   </node>
 </launch>
