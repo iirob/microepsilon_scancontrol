@@ -446,7 +446,11 @@ Scanner26xx::Scanner26xx(TimeSync* time_sync,Notifyee* notifyee,unsigned int shu
 	connect();
 	if(connected_)
 	{
-		initialise();	
+		if(!initialise())
+                {
+                    disconnect();
+                    return;
+                }
 		if(!setLaserPower(true))
 		{
 			disconnect();
