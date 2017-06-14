@@ -1,7 +1,7 @@
 #!/bin/bash
 
-LIB_DIR='/usr/local/lib'
-INCLUDE_DIR='/usr/local/include'
+LIB_DIR='/usr/local/lib/'
+INCLUDE_DIR='/usr/local/include/'
 OPT_DIR='/opt/scanCONTROL/'
 
 DEVICE='device_properties.dat'
@@ -14,7 +14,7 @@ LLT_SO='libllt.so.1.0'
 LLT_H2='LLTDataTypes.h'
 MESCAN_H='libmescan.h'
 MESCAN_SO='libmescan.so.1.0'
-DIR_ERROR="You have to run ./install.sh \"/path/to/scanCONTROL/\""
+DIR_ERROR="You have to run ./install.sh \"/path/to/C++ SDK (Linux)/\" (binaries(x86_64) is located there)"
 
 if ! [ -d $1$BIN_DIR$MESCAN ]
 then
@@ -102,6 +102,8 @@ sudo cp -- "$1$BIN_DIR$LLT$LLT_SO" "$LIB_DIR"
 
 echo "running ldconfig to create symlinks and cache."
 sudo ldconfig
+sudo ln -s -- "$LIB_DIR$LLT_SO" "$LIB_DIR"libllt.so
+sudo ln -s -- "$LIB_DIR$MESCAN_SO" "$LIB_DIR"libmescan.so
 
 echo "Copying headers to $INCLUDE_DIR, need sudo rights."
 sudo cp -- "$1$BIN_DIR$MESCAN$MESCAN_H" "$INCLUDE_DIR$MESCAN"
