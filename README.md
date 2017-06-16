@@ -32,3 +32,4 @@ microepsilon_scancontrol
 
 ## Notes:
 - Currently uses fixed profile size of 640
+- Tested with indigo and kinetic
