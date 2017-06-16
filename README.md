@@ -29,3 +29,6 @@ microepsilon_scancontrol
 | field_far (optional)  | How much should meassurement field be restricted on the far side. Unit is % of whole field. Default is 0.  |
 | field_near (optional)  | How much should meassurement field be restricted on the near side. Unit is % of whole field. Default is 0. |
 | lag_compensation (optional)  | Offset to eliminate constant network lag between scanner and PC. Unit is seconds. Default is 0-  |
+
+## Notes:
+- Currently uses fixed profile size of 640
