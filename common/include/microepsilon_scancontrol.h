@@ -147,10 +147,10 @@ private:
   void WriteValue2Register(unsigned short value);
 
 public:
-    Scanner (TimeSync* time_sync, Notifyee* notifyee, unsigned int shutter_time, unsigned int idle_time,
-              unsigned int container_size, MeasurementField field, std::string serial_number,
-              std::string path_to_device_properties);
-    ~Scanner();
+  Scanner(TimeSync* time_sync, Notifyee* notifyee, unsigned int shutter_time, unsigned int idle_time,
+          unsigned int container_size, MeasurementField field, std::string serial_number,
+          std::string path_to_device_properties);
+  ~Scanner();
 
   bool reconnect();
 

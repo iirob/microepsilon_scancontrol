@@ -228,8 +228,7 @@ bool Scanner::initialise()
     ;
   }
 
-  if ((llt_.RegisterControlLostCallback((gpointer)&Scanner::control_lost_callback_wrapper, this)) <
-      GENERAL_FUNCTION_OK)
+  if ((llt_.RegisterControlLostCallback((gpointer)&Scanner::control_lost_callback_wrapper, this)) < GENERAL_FUNCTION_OK)
   {
     std::cout << "Error while registering control lost callback!\n";
     return false;
@@ -430,8 +429,8 @@ bool Scanner::stopScanning()
 }
 
 Scanner::Scanner(TimeSync *time_sync, Notifyee *notifyee, unsigned int shutter_time, unsigned int idle_time,
-                         unsigned int container_size, MeasurementField field, std::string serial_number,
-                         std::string path_to_device_properties)
+                 unsigned int container_size, MeasurementField field, std::string serial_number,
+                 std::string path_to_device_properties)
   : time_sync_(time_sync)
   , notifyee_(notifyee)
   , shutter_time_(shutter_time)

@@ -56,9 +56,9 @@ double average(double a, double b)
 class ScannerNode : public TimeSync, Notifyee
 {
 public:
-  ScannerNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size,
-                  MeasurementField field, double lag_compensation, std::string topic, std::string frame,
-                  std::string serial_number, std::string path_to_device_properties);
+  ScannerNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size, MeasurementField field,
+              double lag_compensation, std::string topic, std::string frame, std::string serial_number,
+              std::string path_to_device_properties);
 
   void publish();
   bool startScanning();
@@ -90,8 +90,8 @@ private:
 };
 
 ScannerNode::ScannerNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size,
-                                 MeasurementField field, double lag_compensation, std::string topic, std::string frame,
-                                 std::string serial_number, std::string path_to_device_properties)
+                         MeasurementField field, double lag_compensation, std::string topic, std::string frame,
+                         std::string serial_number, std::string path_to_device_properties)
   : laser_(this, this, shutter_time, idle_time, container_size, field, serial_number, path_to_device_properties)
   , lag_compensation_(lag_compensation)
   , frame_(frame)
@@ -282,8 +282,8 @@ int main(int argc, char** argv)
   field_far = fmin(fmax(field_far, 0.0), 1.0);
   field_near = fmin(fmax(field_near, 0.0), 1.0);
   microepsilon_scancontrol::MeasurementField field(field_left, field_right, field_far, field_near);
-  microepsilon_scancontrol::ScannerNode scanner(shutter_time, idle_time, container_size, field, lag_compensation, topic, frame, serial_number,
-                          path_to_device_properties);
+  microepsilon_scancontrol::ScannerNode scanner(shutter_time, idle_time, container_size, field, lag_compensation, topic,
+                                                frame, serial_number, path_to_device_properties);
   bool scanning = scanner.startScanning();
   while (!scanning && !ros::isShuttingDown())
   {
@@ -298,4 +298,3 @@ int main(int argc, char** argv)
 
   return 0;
 }
-
