@@ -1,4 +1,4 @@
-scan_26xx
+microepsilon_scancontrol
 ==========
 ## Installation Instructions:
 - go to http://www.micro-epsilon.com/2D_3D/laser-scanner/Software/downloads/?sLang=en and request a download link for C++ SDK (Linux) and extract it somewhere.
