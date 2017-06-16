@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
   
-  <node ns = "arm" name="scan_26xx_node" pkg="scan_26xx" type="scan_26xx_node" cwd="node" respawn="true" output="screen">
+  <node ns = "arm" name="microepsilon_scancontrol_node" pkg="microepsilon_scancontrol" type="scan_26xx_node" cwd="node" respawn="true" output="screen">
 	  <param name="shutter_time" type="int" value="100"/>
 	  <param name="idle_time" type="int" value="100"/>
 	  <param name="container_size" type="int" value="50"/>

@@ -39,22 +39,24 @@
 *****************************************************************************/
 
 #include "ros/ros.h"
-#include "scanner26xx.h"
+#include "microepsilon_scancontrol.h"
 
 #include "sensor_msgs/PointCloud2.h"
 #include <sensor_msgs/point_cloud2_iterator.h>
 #include <std_msgs/Float32MultiArray.h>
 #include <std_srvs/Empty.h>
 
+namespace microepsilon_scancontrol
+{
 double average(double a, double b)
 {
   return (a + b) / 2.0;
 }
 
-class Scanner26xxNode : public TimeSync, Notifyee
+class ScannerNode : public TimeSync, Notifyee
 {
 public:
-  Scanner26xxNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size,
+  ScannerNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size,
                   MeasurementField field, double lag_compensation, std::string topic, std::string frame,
                   std::string serial_number, std::string path_to_device_properties);
 
@@ -87,7 +89,7 @@ private:
   bool publishing_;
 };
 
-Scanner26xxNode::Scanner26xxNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size,
+ScannerNode::ScannerNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size,
                                  MeasurementField field, double lag_compensation, std::string topic, std::string frame,
                                  std::string serial_number, std::string path_to_device_properties)
   : laser_(this, this, shutter_time, idle_time, container_size, field, serial_number, path_to_device_properties)
@@ -103,7 +105,7 @@ Scanner26xxNode::Scanner26xxNode(unsigned int shutter_time, unsigned int idle_ti
   ROS_INFO("Connecting to Laser");
 }
 
-void Scanner26xxNode::sync_time(unsigned int profile_counter, double shutter_open, double shutter_close)
+void ScannerNode::sync_time(unsigned int profile_counter, double shutter_open, double shutter_close)
 {
   ROS_DEBUG("New Timestamp: %d %9f", profile_counter, average(shutter_open, shutter_close));
   shutter_close_sync_ =
@@ -111,23 +113,23 @@ void Scanner26xxNode::sync_time(unsigned int profile_counter, double shutter_ope
   last_second_ = 0;
 }
 
-void Scanner26xxNode::notify()
+void ScannerNode::notify()
 {
   publish();
 }
 
-bool Scanner26xxNode::laser_off(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res)
+bool ScannerNode::laser_off(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res)
 {
   publishing_ = false;
   return laser_.setLaserPower(false);
 }
-bool Scanner26xxNode::laser_on(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res)
+bool ScannerNode::laser_on(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res)
 {
   publishing_ = true;
   return laser_.setLaserPower(true);
 }
 
-void Scanner26xxNode::initialiseMessage()
+void ScannerNode::initialiseMessage()
 {
   cloud_msg_.header.frame_id = frame_;
   cloud_msg_.is_bigendian = false;
@@ -140,7 +142,7 @@ void Scanner26xxNode::initialiseMessage()
   modifier.reserve(640);
 }
 
-void Scanner26xxNode::publish()
+void ScannerNode::publish()
 {
   while (laser_.hasNewData())
   {
@@ -186,17 +188,17 @@ void Scanner26xxNode::publish()
   }
 }
 
-bool Scanner26xxNode::startScanning()
+bool ScannerNode::startScanning()
 {
   return laser_.startScanning();
 }
 
-bool Scanner26xxNode::stopScanning()
+bool ScannerNode::stopScanning()
 {
   return laser_.stopScanning();
 }
 
-bool Scanner26xxNode::reconnect()
+bool ScannerNode::reconnect()
 {
   laser_.reconnect();
 }
@@ -278,7 +280,7 @@ int main(int argc, char** argv)
   field_far = fmin(fmax(field_far, 0.0), 1.0);
   field_near = fmin(fmax(field_near, 0.0), 1.0);
   MeasurementField field(field_left, field_right, field_far, field_near);
-  Scanner26xxNode scanner(shutter_time, idle_time, container_size, field, lag_compensation, topic, frame, serial_number,
+  ScannerNode scanner(shutter_time, idle_time, container_size, field, lag_compensation, topic, frame, serial_number,
                           path_to_device_properties);
   bool scanning = scanner.startScanning();
   while (!scanning && !ros::isShuttingDown())
@@ -294,3 +296,5 @@ int main(int argc, char** argv)
 
   return 0;
 }
+
+}  // namespace microepsilon_scancontrol

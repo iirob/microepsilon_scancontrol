@@ -38,9 +38,11 @@
  * along with this package. If not, see <http://www.gnu.org/licenses/>.
 *****************************************************************************/
 
-#include "scanner26xx.h"
+#include "microepsilon_scancontrol.h"
 
-bool Scanner26xx::connect()
+namespace microepsilon_scancontrol
+{
+bool Scanner::connect()
 {
   if (connected_)
   {
@@ -156,7 +158,7 @@ bool Scanner26xx::connect()
   return true;
 }
 
-bool Scanner26xx::initialise()
+bool Scanner::initialise()
 {
   if (!connected_)
   {
@@ -219,14 +221,14 @@ bool Scanner26xx::initialise()
   }
 
   /* Register Callbacks for program handling */
-  if ((llt_.RegisterBufferCallback((gpointer)&Scanner26xx::new_profile_callback_wrapper, this)) < GENERAL_FUNCTION_OK)
+  if ((llt_.RegisterBufferCallback((gpointer)&Scanner::new_profile_callback_wrapper, this)) < GENERAL_FUNCTION_OK)
   {
     std::cout << "Error while registering buffer callback!\n";
     return false;
     ;
   }
 
-  if ((llt_.RegisterControlLostCallback((gpointer)&Scanner26xx::control_lost_callback_wrapper, this)) <
+  if ((llt_.RegisterControlLostCallback((gpointer)&Scanner::control_lost_callback_wrapper, this)) <
       GENERAL_FUNCTION_OK)
   {
     std::cout << "Error while registering control lost callback!\n";
@@ -237,7 +239,7 @@ bool Scanner26xx::initialise()
   return true;
 }
 
-bool Scanner26xx::disconnect()
+bool Scanner::disconnect()
 {
   if (!connected_)
   {
@@ -247,17 +249,17 @@ bool Scanner26xx::disconnect()
   connected_ = false;
   return true;
 }
-void Scanner26xx::control_lost_callback_wrapper(ArvGvDevice *gv_device, gpointer user_data)
+void Scanner::control_lost_callback_wrapper(ArvGvDevice *gv_device, gpointer user_data)
 {
-  ((Scanner26xx *)user_data)->control_lost_callback(gv_device);
+  ((Scanner *)user_data)->control_lost_callback(gv_device);
 }
 
-void Scanner26xx::new_profile_callback_wrapper(const void *data, size_t data_size, gpointer user_data)
+void Scanner::new_profile_callback_wrapper(const void *data, size_t data_size, gpointer user_data)
 {
-  ((Scanner26xx *)user_data)->new_profile_callback(data, data_size);
+  ((Scanner *)user_data)->new_profile_callback(data, data_size);
 }
 
-void Scanner26xx::control_lost_callback(ArvGvDevice *gv_device)
+void Scanner::control_lost_callback(ArvGvDevice *gv_device)
 {
   connected_ = false;
   std::cout << "Connection to scanner lost! Trying to reconnect!" << std::endl;
@@ -280,7 +282,7 @@ void DisplayTimestamp(unsigned char *uiTimestamp)
             << " ShutterClose: " << dShutterClose << "\n";
   std::cout.precision(6);
 }
-void Scanner26xx::new_profile_callback(const void *data, size_t data_size)
+void Scanner::new_profile_callback(const void *data, size_t data_size)
 {
   {
     boost::mutex::scoped_lock lock(mutex_);
@@ -323,14 +325,14 @@ void Scanner26xx::new_profile_callback(const void *data, size_t data_size)
   notifyee_->notify();
 }
 
-bool Scanner26xx::hasNewData()
+bool Scanner::hasNewData()
 {
   boost::mutex::scoped_lock lock(mutex_);
   bool ret = !profile_queue_.empty();
   return ret;
 }
 
-ScanProfileConvertedPtr Scanner26xx::getData()
+ScanProfileConvertedPtr Scanner::getData()
 {
   boost::mutex::scoped_lock lock(mutex_);
   ScanProfileConvertedPtr ptr;
@@ -344,7 +346,7 @@ ScanProfileConvertedPtr Scanner26xx::getData()
   return ptr;
 }
 
-bool Scanner26xx::startScanning()
+bool Scanner::startScanning()
 {
   need_time_sync_ = true;
   if (!connected_)
@@ -407,7 +409,7 @@ bool Scanner26xx::startScanning()
   return true;
 }
 
-bool Scanner26xx::stopScanning()
+bool Scanner::stopScanning()
 {
   if (!connected_)
   {
@@ -427,7 +429,7 @@ bool Scanner26xx::stopScanning()
   return true;
 }
 
-Scanner26xx::Scanner26xx(TimeSync *time_sync, Notifyee *notifyee, unsigned int shutter_time, unsigned int idle_time,
+Scanner::Scanner(TimeSync *time_sync, Notifyee *notifyee, unsigned int shutter_time, unsigned int idle_time,
                          unsigned int container_size, MeasurementField field, std::string serial_number,
                          std::string path_to_device_properties)
   : time_sync_(time_sync)
@@ -459,7 +461,7 @@ Scanner26xx::Scanner26xx(TimeSync *time_sync, Notifyee *notifyee, unsigned int s
     }
   }
 }
-Scanner26xx::~Scanner26xx()
+Scanner::~Scanner()
 {
   if (connected_)
   {
@@ -472,7 +474,7 @@ Scanner26xx::~Scanner26xx()
   }
 }
 
-bool Scanner26xx::reconnect()
+bool Scanner::reconnect()
 {
   if (connected_)
   {
@@ -503,7 +505,7 @@ bool Scanner26xx::reconnect()
   return true;
 }
 
-bool Scanner26xx::setLaserPower(bool on)
+bool Scanner::setLaserPower(bool on)
 {
   guint32 value = on ? 0x82000002 : 0x82000000;
 
@@ -517,20 +519,20 @@ bool Scanner26xx::setLaserPower(bool on)
 }
 
 // Schreibkommando für seq. Register
-void Scanner26xx::WriteCommand(unsigned int command, unsigned int data)
+void Scanner::WriteCommand(unsigned int command, unsigned int data)
 {
   static int toggle = 0;
   llt_.SetFeature(FEATURE_FUNCTION_SHARPNESS, (unsigned int)(command << 9) + (toggle << 8) + data);
   toggle = toggle ? 0 : 1;
 }
 // Schreibe Wert auf Registerposition
-void Scanner26xx::WriteValue2Register(unsigned short value)
+void Scanner::WriteValue2Register(unsigned short value)
 {
   WriteCommand(1, (unsigned int)(value / 256));
   WriteCommand(1, (unsigned int)(value % 256));
 }
 
-void Scanner26xx::setMeasuringField(ushort x_start, ushort x_size, ushort z_start, ushort z_size)
+void Scanner::setMeasuringField(ushort x_start, ushort x_size, ushort z_start, ushort z_size)
 {
   // Aktiviere freies Messfeld
   llt_.SetFeature(FEATURE_FUNCTION_MEASURINGFIELD, 0x82000800);
@@ -545,3 +547,5 @@ void Scanner26xx::setMeasuringField(ushort x_start, ushort x_size, ushort z_star
   WriteValue2Register(x_size);
   WriteCommand(0, 0);  // Beende Schreibvorgang
 }
+
+}  // namespace microepsilon_scancontrol

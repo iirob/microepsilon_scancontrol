@@ -1,10 +1,10 @@
 <package format="2">
-  <name>scan_26xx</name>
+  <name>microepsilon_scancontrol</name>
   <version>1.0.0</version>
-  <description>This package publishes PointCloud2 messages of profiles meassured by a MICRO-EPSILON scanCONTROL_26xx laser scanner.
+  <description>This package publishes PointCloud2 messages of profiles meassured by a MICRO-EPSILON scanCONTROL laser scanner.
   </description>
 
-  <maintainer email="dennis.hartmann@student.kit.edu">Dennis Hartmann</maintainer>
+  <maintainer email="dennis.hartmann@kit.edu">Dennis Hartmann</maintainer>
   <author>Dennis Hartmann</author>
 
   <license>LGPL</license>

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(scan_26xx)
+project(microepsilon_scancontrol)
 
 find_package(catkin REQUIRED COMPONENTS roscpp sensor_msgs std_srvs std_msgs)
 

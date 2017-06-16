@@ -38,8 +38,8 @@
  * along with this package. If not, see <http://www.gnu.org/licenses/>.
 *****************************************************************************/
 
-#ifndef _SCANNER26XX_H_
-#define _SCANNER26XX_H_
+#ifndef _MICROEPSILON_SCANCONTROL_ROS_H_
+#define _MICROEPSILON_SCANCONTROL_ROS_H_
 
 #include "libllt.h"
 #include <vector>
@@ -48,6 +48,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/mutex.hpp>
 
+namespace microepsilon_scancontrol
+{
 const int SCANNER_RESOLUTION = 640;
 
 class TimeSync
@@ -111,7 +113,7 @@ struct ScanProfileConverted
 };
 typedef boost::shared_ptr<ScanProfileConverted> ScanProfileConvertedPtr;
 
-class Scanner26xx
+class Scanner
 {
 private:
   bool scanning_;
@@ -145,10 +147,10 @@ private:
   void WriteValue2Register(unsigned short value);
 
 public:
-  Scanner26xx(TimeSync* time_sync, Notifyee* notifyee, unsigned int shutter_time, unsigned int idle_time,
+    Scanner (TimeSync* time_sync, Notifyee* notifyee, unsigned int shutter_time, unsigned int idle_time,
               unsigned int container_size, MeasurementField field, std::string serial_number,
               std::string path_to_device_properties);
-  ~Scanner26xx();
+    ~Scanner();
 
   bool reconnect();
 
@@ -159,4 +161,5 @@ public:
   ScanProfileConvertedPtr getData();
 };
 
+}  // namespace microepsilon_scancontrol
 #endif
