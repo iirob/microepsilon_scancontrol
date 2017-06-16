@@ -78,7 +78,7 @@ private:
 
   ros::NodeHandle nh_;
   // laser data
-  Scanner26xx laser_;
+  Scanner laser_;
   int last_second_;
   double lag_compensation_;
   // published data
@@ -98,8 +98,8 @@ ScannerNode::ScannerNode(unsigned int shutter_time, unsigned int idle_time, unsi
 {
   scan_pub_ = nh_.advertise<sensor_msgs::PointCloud2>(topic, 500);
   meassured_z_pub_ = nh_.advertise<std_msgs::Float32MultiArray>("meassured_z", 50);
-  laser_off_ = nh_.advertiseService("laser_off", &Scanner26xxNode::laser_off, this);
-  laser_on_ = nh_.advertiseService("laser_on", &Scanner26xxNode::laser_on, this);
+  laser_off_ = nh_.advertiseService("laser_off", &ScannerNode::laser_off, this);
+  laser_on_ = nh_.advertiseService("laser_on", &ScannerNode::laser_on, this);
   publishing_ = true;
   initialiseMessage();
   ROS_INFO("Connecting to Laser");
@@ -203,11 +203,13 @@ bool ScannerNode::reconnect()
   laser_.reconnect();
 }
 
+}  // namespace microepsilon_scancontrol
+
 //#######################
 //#### main programm ####
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "scan_26xx_node");
+  ros::init(argc, argv, "microepsilon_scancontrol_node");
 
   ros::NodeHandle nh_private("~");
 
@@ -279,8 +281,8 @@ int main(int argc, char** argv)
   field_right = fmin(fmax(field_right, 0.0), 1.0);
   field_far = fmin(fmax(field_far, 0.0), 1.0);
   field_near = fmin(fmax(field_near, 0.0), 1.0);
-  MeasurementField field(field_left, field_right, field_far, field_near);
-  ScannerNode scanner(shutter_time, idle_time, container_size, field, lag_compensation, topic, frame, serial_number,
+  microepsilon_scancontrol::MeasurementField field(field_left, field_right, field_far, field_near);
+  microepsilon_scancontrol::ScannerNode scanner(shutter_time, idle_time, container_size, field, lag_compensation, topic, frame, serial_number,
                           path_to_device_properties);
   bool scanning = scanner.startScanning();
   while (!scanning && !ros::isShuttingDown())
@@ -297,4 +299,3 @@ int main(int argc, char** argv)
   return 0;
 }
 
-}  // namespace microepsilon_scancontrol

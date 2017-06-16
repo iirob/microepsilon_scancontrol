@@ -22,8 +22,8 @@ catkin_package(
    CATKIN_DEPENDS roscpp sensor_msgs std_srvs std_msgs
    DEPENDS Boost ARAVIS4)
 
-add_library(${PROJECT_NAME} common/src/scanner26xx.cpp)
-add_executable(${PROJECT_NAME}_node ros/src/scan_26xx_node.cpp)
+add_library(${PROJECT_NAME} common/src/${PROJECT_NAME}.cpp)
+add_executable(${PROJECT_NAME}_node ros/src/${PROJECT_NAME}_node.cpp)
 
 
 add_dependencies(${PROJECT_NAME}_node ${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
