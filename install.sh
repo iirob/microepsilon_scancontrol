@@ -72,8 +72,6 @@ then
     exit 1
 fi
 
-set -e
-
 echo "Installing prerequisites for aravis-0.4, need sudo rights."
 sudo apt-get install -y autoconf intltool automake gtk-doc-tools
 
@@ -99,6 +97,8 @@ sudo mkdir -p -- "$OPT_DIR"
 echo "Copying libs to $LIB_DIR, need sudo rights."
 sudo cp -- "$1$BIN_DIR$MESCAN$MESCAN_SO" "$LIB_DIR"
 sudo cp -- "$1$BIN_DIR$LLT$LLT_SO" "$LIB_DIR"
+sudo chmod 755 "$LIB_DIR$LLT_SO"
+sudo chmod 755 "$LIB_DIR$MESCAN_SO"
 
 echo "running ldconfig to create symlinks and cache."
 sudo ldconfig
@@ -109,7 +109,9 @@ echo "Copying headers to $INCLUDE_DIR, need sudo rights."
 sudo cp -- "$1$BIN_DIR$MESCAN$MESCAN_H" "$INCLUDE_DIR$MESCAN"
 sudo cp -- "$1$BIN_DIR$LLT$LLT_H" "$INCLUDE_DIR$LLT"
 sudo cp -- "$1$BIN_DIR$LLT$LLT_H2" "$INCLUDE_DIR$LLT"
+sudo chmod -R u+rwX,g+rX,o+rX "$INCLUDE_DIR$MESCAN"
+sudo chmod -R u+rwX,g+rX,o+rX "$INCLUDE_DIR$LLT"
 
 echo "Copying $DEVICE to $OPT_DIR, need sudo rights."
 sudo cp -- "$1$DEVICE_DIR$DEVICE" "$OPT_DIR"
-
+sudo chmod -R u+rwX,g+rX,o+rX "$OPT_DIR"
