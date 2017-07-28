@@ -7,7 +7,8 @@
 	  <param name="container_size" type="int" value="50"/>
 	  <param name="lag_compensation" type="double" value="0.001"/>
 	  <param name="topic" type="string" value="laser_scan"/>
-	  <param name="frame" type="string" value="calibrated_sensor_tcp_link"/>
+    <param name="frame" type="string" value="mill_tool_mill_laser_origin_link"/>
+    <param name="dense" type="bool" value="false"/>
 	  <param name="field_left" type="double" value="0.2"/>
 	  <param name="field_right" type="double" value="0.2"/>
 	  <param name="field_far" type="double" value="0.2"/>

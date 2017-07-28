@@ -119,6 +119,7 @@ private:
   bool scanning_;
   bool connected_;
   bool need_time_sync_;
+  bool dense_;
 
   unsigned int idle_time_;
   unsigned int shutter_time_;
@@ -148,7 +149,7 @@ private:
 
 public:
   Scanner(TimeSync* time_sync, Notifyee* notifyee, unsigned int shutter_time, unsigned int idle_time,
-          unsigned int container_size, MeasurementField field, std::string serial_number,
+          unsigned int container_size, MeasurementField field, bool dense, std::string serial_number,
           std::string path_to_device_properties);
   ~Scanner();
 

@@ -57,7 +57,7 @@ class ScannerNode : public TimeSync, Notifyee
 {
 public:
   ScannerNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size, MeasurementField field,
-              double lag_compensation, std::string topic, std::string frame, std::string serial_number,
+              double lag_compensation, std::string topic, std::string frame, bool dense, std::string serial_number,
               std::string path_to_device_properties);
 
   void publish();
@@ -86,13 +86,13 @@ private:
   // parameters
   ros::Duration shutter_close_sync_;
   std::string frame_;
-  bool publishing_;
+  bool publishing_, dense_;
 };
 
 ScannerNode::ScannerNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size,
                          MeasurementField field, double lag_compensation, std::string topic, std::string frame,
-                         std::string serial_number, std::string path_to_device_properties)
-  : laser_(this, this, shutter_time, idle_time, container_size, field, serial_number, path_to_device_properties)
+                         bool dense, std::string serial_number, std::string path_to_device_properties)
+  : laser_(this, this, shutter_time, idle_time, container_size, field, dense, serial_number, path_to_device_properties)
   , lag_compensation_(lag_compensation)
   , frame_(frame)
 {
@@ -101,6 +101,7 @@ ScannerNode::ScannerNode(unsigned int shutter_time, unsigned int idle_time, unsi
   laser_off_ = nh_.advertiseService("laser_off", &ScannerNode::laser_off, this);
   laser_on_ = nh_.advertiseService("laser_on", &ScannerNode::laser_on, this);
   publishing_ = true;
+  dense_ = dense;
   initialiseMessage();
   ROS_INFO("Connecting to Laser");
 }
@@ -133,7 +134,7 @@ void ScannerNode::initialiseMessage()
 {
   cloud_msg_.header.frame_id = frame_;
   cloud_msg_.is_bigendian = false;
-  cloud_msg_.is_dense = true;
+  cloud_msg_.is_dense = dense_;
   cloud_msg_.height = 1;
   cloud_msg_.width = 640;
   sensor_msgs::PointCloud2Modifier modifier(cloud_msg_);
@@ -177,7 +178,7 @@ void ScannerNode::publish()
       }
       scan_pub_.publish(cloud_msg_);
       std_msgs::Float32MultiArray meassured_z;
-      if (data->z.size() > 0)
+      if (dense_ && data->z.size() > 0)
       {
         meassured_z.data.push_back((float)data->z[0]);
         meassured_z.data.push_back((float)data->z[data->z.size() / 2]);
@@ -219,6 +220,7 @@ int main(int argc, char** argv)
   double lag_compensation;
   std::string topic, frame, serial_number, path_to_device_properties;
   double field_left, field_right, field_far, field_near;
+  bool dense;
   if (!nh_private.getParam("shutter_time", shutter_time))
   {
     ROS_ERROR("You have to specify parameter shutter_time!");
@@ -247,6 +249,10 @@ int main(int argc, char** argv)
   if (!nh_private.getParam("topic", topic))
   {
     topic = "laser_scan";
+  }
+  if (!nh_private.getParam("dense", dense))
+  {
+    dense = true;
   }
   if (!nh_private.getParam("serial_number", serial_number))
   {
@@ -282,8 +288,9 @@ int main(int argc, char** argv)
   field_far = fmin(fmax(field_far, 0.0), 1.0);
   field_near = fmin(fmax(field_near, 0.0), 1.0);
   microepsilon_scancontrol::MeasurementField field(field_left, field_right, field_far, field_near);
-  microepsilon_scancontrol::ScannerNode scanner(shutter_time, idle_time, container_size, field, lag_compensation, topic,
-                                                frame, serial_number, path_to_device_properties);
+  microepsilon_scancontrol::ScannerNode scanner(shutter_time, idle_time, container_size, field, 
+                                                lag_compensation, topic, frame, dense, 
+                                                serial_number, path_to_device_properties);
   bool scanning = scanner.startScanning();
   while (!scanning && !ros::isShuttingDown())
   {

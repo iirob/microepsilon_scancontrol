@@ -308,11 +308,16 @@ void Scanner::new_profile_callback(const void *data, size_t data_size)
       // DisplayTimestamp(container_buffer_[i].timestamp);
       for (int j = 0; j < SCANNER_RESOLUTION; ++j)
       {
-        if (container_buffer_[i].z[j] != 0)
+        double x = ((container_buffer_[i].x[j] - (guint16)32768) * llt_.appData.scaling) / 1000.0;  // in meter
+        double z = ((container_buffer_[i].z[j] - (guint16)32768) * llt_.appData.scaling + llt_.appData.offset) /
+        1000.0;  // in meter
+        
+        if (container_buffer_[i].z[j] == 0)
         {
-          double x = ((container_buffer_[i].x[j] - (guint16)32768) * llt_.appData.scaling) / 1000.0;  // in meter
-          double z = ((container_buffer_[i].z[j] - (guint16)32768) * llt_.appData.scaling + llt_.appData.offset) /
-                     1000.0;  // in meter
+          z = std::numeric_limits<double>::quiet_NaN();
+        }
+        if(!dense_ || container_buffer_[i].z[j] != 0)
+        {
           profile->x.push_back(x);
           profile->z.push_back(z);
         }
@@ -429,7 +434,7 @@ bool Scanner::stopScanning()
 }
 
 Scanner::Scanner(TimeSync *time_sync, Notifyee *notifyee, unsigned int shutter_time, unsigned int idle_time,
-                 unsigned int container_size, MeasurementField field, std::string serial_number,
+                 unsigned int container_size, MeasurementField field, bool dense, std::string serial_number,
                  std::string path_to_device_properties)
   : time_sync_(time_sync)
   , notifyee_(notifyee)
@@ -437,6 +442,7 @@ Scanner::Scanner(TimeSync *time_sync, Notifyee *notifyee, unsigned int shutter_t
   , idle_time_(idle_time)
   , container_size_(container_size)
   , field_(field)
+  , dense_(dense)
   , serial_number_(serial_number)
 {
   connected_ = false;
