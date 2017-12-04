@@ -2,7 +2,7 @@ microepsilon_scancontrol
 ==========
 ## Installation Instructions:
 - go to http://www.micro-epsilon.com/2D_3D/laser-scanner/Software/downloads/?sLang=en and request a download link for C++ SDK (Linux) and extract it somewhere.
-- run install.sh script like this: ./install.sh "/path/to/sdk"
+- run install.sh script like this: ./install.sh "/path/to/sdk" (Example: "/home/user/scanCONTROL-SDK/C++ SDK (Linux)")
 - the provided directory should have directories binaries(x86_64) and examples
 - you are going to need sudo rights
 
