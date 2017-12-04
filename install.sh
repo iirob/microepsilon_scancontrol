@@ -16,56 +16,56 @@ MESCAN_H='libmescan.h'
 MESCAN_SO='libmescan.so.1.0'
 DIR_ERROR="You have to run ./install.sh \"/path/to/C++ SDK (Linux)/\" (binaries(x86_64) is located there)"
 
-if ! [ -d $1$BIN_DIR$MESCAN ]
+if ! [ -d "$1$BIN_DIR$MESCAN" ]
 then
     echo "Could not find $MESCAN folder in $1$BIN_DIR."
     echo $DIR_ERROR
     exit 1
 fi
 
-if ! [ -d $1$BIN_DIR$LLT ]
+if ! [ -d "$1$BIN_DIR$LLT" ]
 then
     echo "Could not find $LLT folder in $1$BIN_DIR."
     echo $DIR_ERROR
     exit 1
 fi
 
-if ! [ -s $1$BIN_DIR$MESCAN$MESCAN_H ]
+if ! [ -s "$1$BIN_DIR$MESCAN$MESCAN_H" ]
 then
     echo "Could not find $MESCAN_H in $1$BIN_DIR$MESCAN."
     echo $DIR_ERROR
     exit 1
 fi
 
-if ! [ -s $1$BIN_DIR$MESCAN$MESCAN_SO ]
+if ! [ -s "$1$BIN_DIR$MESCAN$MESCAN_SO" ]
 then
     echo "Could not find $MESCAN_SO in $1$BIN_DIR$MESCAN."
     echo $DIR_ERROR
     exit 1
 fi
 
-if ! [ -s $1$BIN_DIR$LLT$LLT_H ]
+if ! [ -s "$1$BIN_DIR$LLT$LLT_H" ]
 then
     echo "Could not find $LLT_H in $1$BIN_DIR$LLT."
     echo $DIR_ERROR
     exit 1
 fi
 
-if ! [ -s $1$BIN_DIR$LLT$LLT_H2 ]
+if ! [ -s "$1$BIN_DIR$LLT$LLT_H2" ]
 then
     echo "Could not find $LLT_H2 in $1$BIN_DIR$LLT."
     echo $DIR_ERROR
     exit 1
 fi
 
-if ! [ -s $1$BIN_DIR$LLT$LLT_SO ]
+if ! [ -s "$1$BIN_DIR$LLT$LLT_SO" ]
 then
     echo "Could not find $LLT_SO in $1$BIN_DIR$LLT."
     echo $DIR_ERROR
     exit 1
 fi
 
-if ! [ -s $1$DEVICE_DIR$DEVICE ]
+if ! [ -s "$1$DEVICE_DIR$DEVICE" ]
 then
     echo "Could not find $DEVICE in $1$DEVICE_DIR."
     echo $DIR_ERROR
