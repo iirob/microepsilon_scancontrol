@@ -3,16 +3,16 @@
   
   <node ns = "arm" name="microepsilon_scancontrol_node" pkg="microepsilon_scancontrol" type="microepsilon_scancontrol_node" cwd="node" respawn="true" output="screen">
 	  <param name="shutter_time" type="int" value="100"/>
-	  <param name="idle_time" type="int" value="100"/>
-	  <param name="container_size" type="int" value="50"/>
-	  <param name="lag_compensation" type="double" value="0.001"/>
+	  <param name="idle_time" type="int" value="400"/>
+	  <param name="container_size" type="int" value="10"/>
+	  <param name="lag_compensation" type="double" value="0.0"/>
 	  <param name="topic" type="string" value="laser_scan"/>
-	  <param name="frame" type="string" value="calibrated_sensor_tcp_link"/>
-	  <param name="field_left" type="double" value="0.2"/>
-	  <param name="field_right" type="double" value="0.2"/>
-	  <param name="field_far" type="double" value="0.2"/>
+	  <param name="frame" type="string" value="sensor_tcp_link"/>
+	  <param name="field_left" type="double" value="0.0"/>
+	  <param name="field_right" type="double" value="0.0"/>
+	  <param name="field_far" type="double" value="0.0"/>
 	  <param name="field_near" type="double" value="0.0"/>
-	  <param name="serial_number" type="string" value="216090134"/>
+	  <param name="serial_number" type="string" value=""/>
           <param name="path_to_device_properties" type="string" value="/opt/scanCONTROL/"/>
   </node>
 </launch>
