@@ -65,6 +65,7 @@ bool Scanner::connect()
   {
     std::cout << "A error occured during searching for connected scanCONTROL \n";
     uiInterfaceCount = 0;
+    return false;
   }
   else
   {
