@@ -7,7 +7,7 @@
   <link name="base_link"/>
 
 <!-- sensor -->
-  <xacro:scanCONTROL_2600-100 name="scanCONTROL_2600-100" parent="base_link">
+  <xacro:scanCONTROL_2600-100 prefix="scanCONTROL_2600-100" parent="base_link">
       <origin xyz="0 0 0" rpy="0 0 0" />
   </xacro:scanCONTROL_2600-100>
 
