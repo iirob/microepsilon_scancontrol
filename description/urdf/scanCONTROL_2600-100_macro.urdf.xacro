@@ -3,13 +3,13 @@
 
     <xacro:macro name="scanCONTROL_2600-100" params="parent prefix *origin">
 
-        <joint name="${prefix}_sensor_joint" type="fixed">
+        <joint name="${prefix}scanner_joint" type="fixed">
             <xacro:insert_block name="origin" />
             <parent link="${parent}"/>
-            <child link="${prefix}_sensor_link" />
+            <child link="${prefix}scanner_link" />
         </joint>
 
-        <link name="${prefix}_sensor_link">
+        <link name="${prefix}scanner_link">
             <inertial>
                 <mass value="0.01" />
                 <origin xyz="0 0 0" />
