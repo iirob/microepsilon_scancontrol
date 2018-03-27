@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <xacro:macro name="scanCONTROL_2600-100" params="parent prefix *origin">
+
+        <joint name="${prefix}scanner_joint" type="fixed">
+            <xacro:insert_block name="origin" />
+            <parent link="${parent}"/>
+            <child link="${prefix}scanner_link" />
+        </joint>
+
+        <link name="${prefix}scanner_link">
+            <inertial>
+                <mass value="0.01" />
+                <origin xyz="0 0 0" />
+                <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001" />
+            </inertial>
+            <visual>
+                <geometry>
+                    <mesh filename="package://microepsilon_scancontrol/description/meshes/scanCONTROL_2600-100.dae" />
+                </geometry>
+            </visual>
+            <collision>
+                <geometry>
+                    <mesh filename="package://microepsilon_scancontrol/description/meshes/scanCONTROL_2600-100.stl" scale="0.001 0.001 0.001" />
+                </geometry>
+            </collision>
+        </link>
+
+  </xacro:macro>
+
+</robot>
