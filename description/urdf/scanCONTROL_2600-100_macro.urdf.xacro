@@ -26,6 +26,23 @@
                 </geometry>
             </collision>
         </link>
+        
+        <!--<joint name="${prefix}scanner_laser_joint" type="fixed">
+            <origin xyz="0 0 0" rpy="0 0 ${pi}" />
+            <parent link="${prefix}scanner_link"/>
+            <child link="${prefix}scanner_laser_link" />
+        </joint>-->
+        
+        <joint name="${prefix}scanner_laser_joint" type="fixed">
+            <origin xyz="0.0383464 0.109996 0.135064" rpy="${radians(0.242595)} ${radians(0.0646638)} ${radians(-92.129)}" />
+            <parent link="tool0"/>
+            <child link="${prefix}scanner_laser_link" />
+        </joint>
+        
+        <link name="${prefix}scanner_laser_link" />
+          
+          
+        
 
   </xacro:macro>
 
