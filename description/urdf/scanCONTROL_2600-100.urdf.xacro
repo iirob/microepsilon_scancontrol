@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="scanCONTROL_2600-100" >
+
+   <xacro:include filename="$(find microepsilon_scancontrol)/description/urdf/scanCONTROL_2600-100_macro.urdf.xacro" />
+
+  <!-- Used for fixing sensor to Gazebo -->
+  <link name="base_link"/>
+
+<!-- sensor -->
+  <xacro:scanCONTROL_2600-100 prefix="scanCONTROL_2600-100" parent="base_link">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+  </xacro:scanCONTROL_2600-100>
+
+</robot>
