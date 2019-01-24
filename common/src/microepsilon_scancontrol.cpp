@@ -36,13 +36,13 @@
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this package. If not, see <http://www.gnu.org/licenses/>.
-*****************************************************************************/
+ *****************************************************************************/
 
 #include "microepsilon_scancontrol.h"
 
 namespace microepsilon_scancontrol
 {
-bool Scanner::connect()
+  bool Scanner::connect()
 {
   if (connected_)
   {
@@ -55,7 +55,7 @@ bool Scanner::connect()
 
   int activeDevice = 0;
 
-  int iRetValue = GetDeviceInterfaces(&vcInterfaces[0], vcInterfaces.size());
+  int iRetValue = CInterfaceLLT::GetDeviceInterfaces(&vcInterfaces[0], vcInterfaces.size());
   if (iRetValue == ERROR_GETDEVINTERFACE_REQUEST_COUNT)
   {
     std::cout << "There are more than " << vcInterfaces.size() << " scanCONTROL connected \n";
@@ -96,7 +96,7 @@ bool Scanner::connect()
     }
   }
 
-  if ((iRetValue = SetPathtoDeviceProperties(path_to_device_properties_.c_str())) < GENERAL_FUNCTION_OK)
+  if ((iRetValue = llt_.SetPathDeviceProperties(path_to_device_properties_.c_str())) < GENERAL_FUNCTION_OK)
   {
     std::cout << "Error setting device ID path\nExit program...\n";
     return false;
@@ -115,8 +115,8 @@ bool Scanner::connect()
     std::cout << "Error while connecting to camera - Error " << iRetValue << "!\n";
     return false;
   }
-  TScannerType m_tscanCONTROLType;
-  if ((iRetValue = llt_.GetLLTType(&m_tscanCONTROLType)) < GENERAL_FUNCTION_OK)
+  
+  if ((iRetValue = llt_.GetLLTType(&type_)) < GENERAL_FUNCTION_OK)
   {
     std::cout << "Error while GetLLTType!\n";
     return false;
@@ -139,15 +139,15 @@ bool Scanner::connect()
   // 	std::cout << llt_.deviceData.rotate_image << std::endl;
   // 	std::cout << llt_.deviceData.min_width << std::endl;
 
-  if (m_tscanCONTROLType == scanCONTROL27xx_xxx)
+  if (type_ == scanCONTROL27xx_xxx)
   {
     std::cout << "The scanCONTROL is a scanCONTROL27xx\n";
   }
-  else if (m_tscanCONTROLType == scanCONTROL26xx_xxx)
+  else if (type_ == scanCONTROL26xx_xxx)
   {
     std::cout << "The scanCONTROL is a scanCONTROL26xx\n";
   }
-  else if (m_tscanCONTROLType == scanCONTROL29xx_xxx)
+  else if (type_ == scanCONTROL29xx_xxx)
   {
     std::cout << "The scanCONTROL is a scanCONTROL29xx\n";
   }
@@ -155,6 +155,7 @@ bool Scanner::connect()
   {
     std::cout << "The scanCONTROL is a undefined type\nPlease contact Micro-Epsilon for a newer SDK\n";
   }
+  CInterfaceLLT::GetScalingAndOffsetByType(type_, &scaling_, &offset_);
   connected_ = true;
   return true;
 }
@@ -274,8 +275,9 @@ void DisplayTimestamp(unsigned char *uiTimestamp)
 {
   double dShutterOpen, dShutterClose;
   unsigned int uiProfileCount;
+  gushort enc_times;
 
-  Timestamp2TimeAndCount(&uiTimestamp[0], &dShutterOpen, &dShutterClose, &uiProfileCount);
+  CInterfaceLLT::Timestamp2TimeAndCount(&uiTimestamp[0], &dShutterOpen, &dShutterClose, &uiProfileCount, &enc_times);
 
   std::cout.precision(8);
   std::cout << "Profile Count: " << uiProfileCount << " ShutterOpen: " << dShutterOpen
@@ -284,6 +286,7 @@ void DisplayTimestamp(unsigned char *uiTimestamp)
 }
 void Scanner::new_profile_callback(const void *data, size_t data_size)
 {
+  
   {
     boost::mutex::scoped_lock lock(mutex_);
     if (data != NULL && data_size == SCANNER_RESOLUTION * fieldCount_ * container_size_ * 2)
@@ -294,8 +297,8 @@ void Scanner::new_profile_callback(const void *data, size_t data_size)
     unsigned int profile_counter;
     double shutter_open;
     double shutter_close;
-    Timestamp2TimeAndCount(container_buffer_[container_buffer_.size() - 1].timestamp, &shutter_open, &shutter_close,
-                           &profile_counter);
+    CInterfaceLLT::Timestamp2TimeAndCount(container_buffer_[container_buffer_.size() - 1].timestamp, &shutter_open,
+                                          &shutter_close, &profile_counter, &enc_times_);
     if (need_time_sync_)
     {
       time_sync_->sync_time(profile_counter, shutter_open, shutter_close);
@@ -304,15 +307,15 @@ void Scanner::new_profile_callback(const void *data, size_t data_size)
     for (int i = 0; i < container_buffer_.size(); ++i)
     {
       ScanProfileConvertedPtr profile(new ScanProfileConverted);
-      Timestamp2TimeAndCount(container_buffer_[i].timestamp, &profile->shutter_open, &profile->shutter_close,
-                             &profile->profile_counter);
+      CInterfaceLLT::Timestamp2TimeAndCount(container_buffer_[i].timestamp, &profile->shutter_open,
+                                            &profile->shutter_close, &profile->profile_counter, &enc_times_);
       // DisplayTimestamp(container_buffer_[i].timestamp);
       for (int j = 0; j < SCANNER_RESOLUTION; ++j)
       {
         if (container_buffer_[i].z[j] != 0)
         {
-          double x = ((container_buffer_[i].x[j] - (guint16)32768) * llt_.appData.scaling) / 1000.0;  // in meter
-          double z = ((container_buffer_[i].z[j] - (guint16)32768) * llt_.appData.scaling + llt_.appData.offset) /
+          double x = ((container_buffer_[i].x[j] - (guint16)32768) * scaling_) / 1000.0;  // in meter
+          double z = ((container_buffer_[i].z[j] - (guint16)32768) * scaling_ + offset_) /
                      1000.0;  // in meter
           profile->x.push_back(x);
           profile->z.push_back(z);

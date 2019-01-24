@@ -36,17 +36,17 @@
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this package. If not, see <http://www.gnu.org/licenses/>.
-*****************************************************************************/
+ *****************************************************************************/
 
 #ifndef _MICROEPSILON_SCANCONTROL_ROS_H_
 #define _MICROEPSILON_SCANCONTROL_ROS_H_
 
-#include "libllt.h"
-#include <vector>
-#include <queue>
-#include <iostream>
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/mutex.hpp>
+#include <iostream>
+#include <queue>
+#include <vector>
+#include <llt.h>
 
 namespace microepsilon_scancontrol
 {
@@ -130,7 +130,10 @@ private:
   MeasurementField field_;
   std::string serial_number_, path_to_device_properties_;
 
-  LLT llt_;
+  CInterfaceLLT llt_;
+  TScannerType type_;
+  double scaling_, offset_;
+  gushort enc_times_;
 
   std::vector<ScanProfile> container_buffer_;
   std::queue<ScanProfileConvertedPtr> profile_queue_;
