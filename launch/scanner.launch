@@ -1,12 +1,13 @@
 <?xml version="1.0"?>
 <launch>  
-  <arg name="shutter_time" default="100" />
-  <arg name="idle_time" default="100"/>
-  <arg name="container_size" default="10"/>
+  <arg name="shutter_time" default=".671" />
+  <arg name="frequency" default="51.01"/>
+  <arg name="auto_shutter" default="true"/>
+  <arg name="container_size" default="1"/>
   <arg name="lag_compensation" default="0.001"/>
   <arg name="topic" default="laser_scan"/>
-  <arg name="frame" default="mill_tool_mill_laser_origin_link"/>
-  <arg name="dense" default="false"/>
+  <arg name="frame" default="world"/>
+  <arg name="dense" default="true"/>
   <arg name="field_left" default="0.2"/>
   <arg name="field_right" default="0.2"/>
   <arg name="field_far" default="0.2"/>
@@ -15,8 +16,9 @@
   <arg name="path_to_device_properties" default="/opt/scanCONTROL/"/>
   <arg name="ns" default="arm"/>
   <node ns = "$(arg ns)" name="microepsilon_scancontrol_node" pkg="microepsilon_scancontrol" type="microepsilon_scancontrol_node" cwd="node" respawn="true" output="screen">
-    <param name="shutter_time" type="int" value="$(arg shutter_time)"/>
-    <param name="idle_time" type="int" value="$(arg idle_time)"/>
+    <param name="shutter_time" type="double" value="$(arg shutter_time)"/>
+    <param name="frequency" type="double" value="$(arg frequency)"/>
+    <param name = "auto_shutter" type="bool" value="$(arg auto_shutter)"/>
     <param name="container_size" type="int" value="$(arg container_size)"/>
     <param name="lag_compensation" type="double" value="$(arg lag_compensation)"/>
     <param name="topic" type="string" value="$(arg topic)"/>

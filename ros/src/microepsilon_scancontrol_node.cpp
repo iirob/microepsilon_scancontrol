@@ -36,15 +36,15 @@
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this package. If not, see <http://www.gnu.org/licenses/>.
-*****************************************************************************/
+ *****************************************************************************/
 
-#include "ros/ros.h"
 #include "microepsilon_scancontrol.h"
+#include "ros/ros.h"
 
-#include "sensor_msgs/PointCloud2.h"
 #include <sensor_msgs/point_cloud2_iterator.h>
 #include <std_msgs/Float32MultiArray.h>
 #include <std_srvs/Empty.h>
+#include "sensor_msgs/PointCloud2.h"
 
 namespace microepsilon_scancontrol
 {
@@ -56,7 +56,7 @@ double average(double a, double b)
 class ScannerNode : public TimeSync, Notifyee
 {
 public:
-  ScannerNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size, MeasurementField field,
+  ScannerNode(unsigned int shutter_time, unsigned int idle_time, bool auto_shutter, unsigned int container_size, MeasurementField field,
               double lag_compensation, std::string topic, std::string frame, std::string serial_number,
               std::string path_to_device_properties);
 
@@ -89,10 +89,10 @@ private:
   bool publishing_;
 };
 
-ScannerNode::ScannerNode(unsigned int shutter_time, unsigned int idle_time, unsigned int container_size,
+ScannerNode::ScannerNode(unsigned int shutter_time, unsigned int idle_time, bool auto_shutter, unsigned int container_size,
                          MeasurementField field, double lag_compensation, std::string topic, std::string frame,
                          std::string serial_number, std::string path_to_device_properties)
-  : laser_(this, this, shutter_time, idle_time, container_size, field, serial_number, path_to_device_properties)
+  : laser_(this, this, shutter_time, idle_time, auto_shutter, container_size, field, serial_number, path_to_device_properties)
   , lag_compensation_(lag_compensation)
   , frame_(frame)
 {
@@ -213,20 +213,29 @@ int main(int argc, char** argv)
 
   ros::NodeHandle nh_private("~");
 
+  double frequency;
+  double shutter_time_ms;
+  bool auto_shutter;
   int shutter_time;
   int idle_time;
   int container_size;
   double lag_compensation;
   std::string topic, frame, serial_number, path_to_device_properties;
   double field_left, field_right, field_far, field_near;
-  if (!nh_private.getParam("shutter_time", shutter_time))
+  if (!nh_private.getParam("shutter_time", shutter_time_ms))
   {
     ROS_ERROR("You have to specify parameter shutter_time!");
     return -1;
   }
-  if (!nh_private.getParam("idle_time", idle_time))
+  shutter_time = 100 * shutter_time_ms;
+  if (!nh_private.getParam("frequency", frequency))
   {
-    ROS_ERROR("You have to specify parameter idle_time!");
+    ROS_ERROR("You have to specify parameter frequency!");
+    return -1;
+  }
+  if (!nh_private.getParam("auto_shutter", auto_shutter))
+  {
+    ROS_ERROR("You have to specify parameter auto_shutter!");
     return -1;
   }
   if (!nh_private.getParam("container_size", container_size))
@@ -272,8 +281,9 @@ int main(int argc, char** argv)
   {
     lag_compensation = 0.0;
   }
+  idle_time = 100000.0 / frequency - shutter_time;
   ROS_INFO("Shutter Time: %.2fms Idle Time: %.2fms Frequency: %.2fHz", shutter_time / 100.0, idle_time / 100.0,
-           100000.0 / (shutter_time + idle_time));
+           frequency);
   ROS_INFO("Profiles for each Container: %d", container_size);
   ROS_INFO("Lag compensation: %.3fms", lag_compensation * 1000);
 
@@ -282,7 +292,7 @@ int main(int argc, char** argv)
   field_far = fmin(fmax(field_far, 0.0), 1.0);
   field_near = fmin(fmax(field_near, 0.0), 1.0);
   microepsilon_scancontrol::MeasurementField field(field_left, field_right, field_far, field_near);
-  microepsilon_scancontrol::ScannerNode scanner(shutter_time, idle_time, container_size, field, lag_compensation, topic,
+  microepsilon_scancontrol::ScannerNode scanner(shutter_time, idle_time, auto_shutter, container_size, field, lag_compensation, topic,
                                                 frame, serial_number, path_to_device_properties);
   bool scanning = scanner.startScanning();
   while (!scanning && !ros::isShuttingDown())

@@ -194,7 +194,8 @@ bool Scanner::initialise()
     return false;
   }
 
-  if (llt_.SetFeature(FEATURE_FUNCTION_SHUTTERTIME, shutter_time_) < GENERAL_FUNCTION_OK)
+  unsigned int shutter_time_flags = auto_shutter_ ? shutter_time_ | SHUTTER_AUTOMATIC : shutter_time_;
+  if (llt_.SetFeature(FEATURE_FUNCTION_SHUTTERTIME, shutter_time_flags) < GENERAL_FUNCTION_OK)
   {
     std::cout << "Error while setting uiShutterTime!\n";
     return false;
@@ -433,12 +434,13 @@ bool Scanner::stopScanning()
 }
 
 Scanner::Scanner(TimeSync *time_sync, Notifyee *notifyee, unsigned int shutter_time, unsigned int idle_time,
-                 unsigned int container_size, MeasurementField field, std::string serial_number,
+                 bool auto_shutter, unsigned int container_size, MeasurementField field, std::string serial_number,
                  std::string path_to_device_properties)
   : time_sync_(time_sync)
   , notifyee_(notifyee)
   , shutter_time_(shutter_time)
   , idle_time_(idle_time)
+  , auto_shutter_(auto_shutter)
   , container_size_(container_size)
   , field_(field)
   , serial_number_(serial_number)

@@ -122,6 +122,7 @@ private:
 
   unsigned int idle_time_;
   unsigned int shutter_time_;
+  bool auto_shutter_;
   unsigned int container_size_;
   boost::mutex mutex_;
   unsigned int fieldCount_;
@@ -151,7 +152,7 @@ private:
 
 public:
   Scanner(TimeSync* time_sync, Notifyee* notifyee, unsigned int shutter_time, unsigned int idle_time,
-          unsigned int container_size, MeasurementField field, std::string serial_number,
+          bool auto_shutter, unsigned int container_size, MeasurementField field, std::string serial_number,
           std::string path_to_device_properties);
   ~Scanner();
 
