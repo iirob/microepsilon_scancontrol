@@ -1,13 +1,17 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(microepsilon_scancontrol)
 
-find_package(catkin REQUIRED COMPONENTS roscpp sensor_msgs std_srvs std_msgs)
+find_package(catkin REQUIRED COMPONENTS roscpp sensor_msgs std_srvs std_msgs dynamic_reconfigure)
 
 find_package(Boost REQUIRED)
 
 find_package (PkgConfig REQUIRED)
 pkg_check_modules (ARAVIS6 REQUIRED aravis-0.6)
 
+generate_dynamic_reconfigure_options(
+  cfg/ScanControl.cfg
+
+)
 
 ### BUILD ###
 include_directories(common/include /usr/local/include/libllt  /usr/local/include/libmescan  ${ARAVIS6_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
@@ -26,7 +30,7 @@ add_library(${PROJECT_NAME} common/src/${PROJECT_NAME}.cpp)
 add_executable(${PROJECT_NAME}_node ros/src/${PROJECT_NAME}_node.cpp)
 
 
-add_dependencies(${PROJECT_NAME}_node ${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME}_node ${PROJECT_NAME} ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${LLT_LIBRARY} ${MESCAN_LIBRARY} ${ARAVIS6_LIBRARIES} )
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME}_node ${PROJECT_NAME} ${catkin_LIBRARIES})

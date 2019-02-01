@@ -2,9 +2,9 @@
 <launch>  
   <arg name="shutter_time" default=".671" />
   <arg name="frequency" default="51.01"/>
-  <arg name="auto_shutter" default="true"/>
-  <arg name="container_size" default="1"/>
-  <arg name="lag_compensation" default="0.001"/>
+  <arg name="auto_shutter" default="false"/>
+  <arg name="container_size" default="10"/>
+  <arg name="lag_compensation" default="0"/>
   <arg name="topic" default="laser_scan"/>
   <arg name="frame" default="world"/>
   <arg name="dense" default="true"/>
@@ -16,18 +16,18 @@
   <arg name="path_to_device_properties" default="/opt/scanCONTROL/"/>
   <arg name="ns" default="arm"/>
   <node ns = "$(arg ns)" name="microepsilon_scancontrol_node" pkg="microepsilon_scancontrol" type="microepsilon_scancontrol_node" cwd="node" respawn="true" output="screen">
-    <param name="shutter_time" type="double" value="$(arg shutter_time)"/>
+    <!-- <param name="shutter_time" type="double" value="$(arg shutter_time)"/>
     <param name="frequency" type="double" value="$(arg frequency)"/>
-    <param name = "auto_shutter" type="bool" value="$(arg auto_shutter)"/>
+    <param name = "auto_shutter" type="bool" value="$(arg auto_shutter)"/> -->
     <param name="container_size" type="int" value="$(arg container_size)"/>
     <param name="lag_compensation" type="double" value="$(arg lag_compensation)"/>
     <param name="topic" type="string" value="$(arg topic)"/>
     <param name="frame" type="string" value="$(arg frame)"/>
     <param name="dense" type="bool" value="$(arg dense)"/>
-    <param name="field_left" type="double" value="$(arg field_left)"/>
+    <!-- <param name="field_left" type="double" value="$(arg field_left)"/>
     <param name="field_right" type="double" value="$(arg field_right)"/>
     <param name="field_far" type="double" value="$(arg field_far)"/>
-    <param name="field_near" type="double" value="$(arg field_near)"/>
+    <param name="field_near" type="double" value="$(arg field_near)"/> -->
     <param name="serial_number" type="string" value="$(arg serial_number)"/>
     <param name="path_to_device_properties" type="string" value="$(arg path_to_device_properties)"/>
   </node>

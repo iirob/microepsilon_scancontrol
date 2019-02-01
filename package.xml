@@ -21,6 +21,7 @@
   <depend>aravis-0.4</depend>
   <depend>libllt</depend>
   <depend>libmescan</depend>
+  <depend>dynamic_reconfigure</depend>
 
 </package>
 

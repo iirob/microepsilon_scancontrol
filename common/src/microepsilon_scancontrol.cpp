@@ -42,7 +42,7 @@
 
 namespace microepsilon_scancontrol
 {
-  bool Scanner::connect()
+bool Scanner::connect()
 {
   if (connected_)
   {
@@ -115,7 +115,7 @@ namespace microepsilon_scancontrol
     std::cout << "Error while connecting to camera - Error " << iRetValue << "!\n";
     return false;
   }
-  
+
   if ((iRetValue = llt_.GetLLTType(&type_)) < GENERAL_FUNCTION_OK)
   {
     std::cout << "Error while GetLLTType!\n";
@@ -188,25 +188,6 @@ bool Scanner::initialise()
     return false;
   }
 
-  if (llt_.SetFeature(FEATURE_FUNCTION_IDLETIME, idle_time_) < GENERAL_FUNCTION_OK)
-  {
-    std::cout << "Error while setting uiIdleTime!\n";
-    return false;
-  }
-
-  unsigned int shutter_time_flags = auto_shutter_ ? shutter_time_ | SHUTTER_AUTOMATIC : shutter_time_;
-  if (llt_.SetFeature(FEATURE_FUNCTION_SHUTTERTIME, shutter_time_flags) < GENERAL_FUNCTION_OK)
-  {
-    std::cout << "Error while setting uiShutterTime!\n";
-    return false;
-  }
-
-  if (llt_.SetFeature(FEATURE_FUNCTION_TRIGGER, 0x00000000) < GENERAL_FUNCTION_OK)
-  {
-    std::cout << "Error while setting trigger!\n";
-    return false;
-  }
-
   // Setting High Voltage mode
   if (llt_.SetFeature(0xf0f008c0, 0x82000820) < GENERAL_FUNCTION_OK)
   {
@@ -216,7 +197,7 @@ bool Scanner::initialise()
 
   int iRetValue;
 
-  if ((iRetValue = llt_.SetPacketSize(SCANNER_RESOLUTION)) < GENERAL_FUNCTION_OK)
+  if ((iRetValue = llt_.SetPacketSize(1024)) < GENERAL_FUNCTION_OK)
   {
     std::cout << "Error during SetPacketSize\n" << iRetValue;
     return false;
@@ -239,6 +220,69 @@ bool Scanner::initialise()
   }
 
   return true;
+}
+
+void Scanner::reconfigure(ScannerConfig config, bool restart)
+{
+  config_ = config;
+  int shutter_time = 100 * config_.shutter_time;
+  int idle_time = 100000.0 / config_.frequency - shutter_time;
+  unsigned int shutter_time_flags = config_.auto_shutter ? shutter_time | SHUTTER_AUTOMATIC : shutter_time;
+  if (llt_.SetFeature(FEATURE_FUNCTION_SHUTTERTIME, shutter_time_flags) < GENERAL_FUNCTION_OK)
+  {
+    std::cout << "Error while setting uiShutterTime!\n";
+  }
+
+  if (llt_.SetFeature(FEATURE_FUNCTION_IDLETIME, idle_time) < GENERAL_FUNCTION_OK)
+  {
+    std::cout << "Error while setting uiIdleTime!\n";
+  }
+
+  // Laser Power and Pulse
+  int laser_value = config_.laser_pulse ? config_.laser_power | LASER_PULSMODE : config_.laser_power;
+  if (llt_.SetFeature(FEATURE_FUNCTION_LASERPOWER, laser_value) < GENERAL_FUNCTION_OK)
+  {
+    std::cout << "Error while setting trigger!\n";
+  }
+
+  // Meassurement field
+  MeasurementField field(config_.field_left, config_.field_right, config_.field_far, config_.field_near);
+  llt_.SetFeature(FEATURE_FUNCTION_MEASURINGFIELD, MEASFIELD_ACTIVATE_FREE);
+  llt_.SetFreeMeasuringField(field.x_start, field.x_size, field.z_start, field.z_size);
+
+  // Peak filter
+  llt_.SetPeakFilter(config_.peak_width_min, config_.peak_width_max, config_.peak_intensity_min,
+                     config_.peak_intensity_max);
+
+  // Threshold
+  int threshold_value = config_.dynamic_threshold << 24 | config_.video_filter << 11 |
+                        config_.ambient_suppresion << 10 | config_.threshold;
+  if (llt_.SetFeature(FEATURE_FUNCTION_THRESHOLD, threshold_value) < GENERAL_FUNCTION_OK)
+  {
+    std::cout << "Error while setting FEATURE_FUNCTION_THRESHOLD!\n";
+  }
+  // Processing
+  int processing_value = PROC_HIGH_RESOLUTION | PROC_CALIBRATION | config_.reflection << 2 | config_.flip_z << 6 |
+                         config_.flip_x << 7 | config_.late_auto_shutter << 8 | config_.shutter_alignment << 9 |
+                         config_.shutter_algorithm << 11;
+  if (llt_.SetFeature(FEATURE_FUNCTION_PROCESSING_PROFILEDATA, processing_value) < GENERAL_FUNCTION_OK)
+  {
+    std::cout << "Error while setting FEATURE_FUNCTION_PROCESSING_PROFILEDATA!\n";
+  }
+
+  // Resampling
+  int resample_value = config_.interpolate << 11 | config_.resample_all << 10 | config_.resample << 4 |
+                       config_.median_filter << 2 | config_.average_filter;
+  if (llt_.SetFeature(FEATURE_FUNCTION_PROFILE_FILTER, resample_value) < GENERAL_FUNCTION_OK)
+  {
+    std::cout << "Error while setting FEATURE_FUNCTION_PROFILE_FILTER!\n";
+  }
+
+  if(restart)
+  {
+    stopScanning();
+    startScanning();
+  }
 }
 
 bool Scanner::disconnect()
@@ -282,15 +326,15 @@ void DisplayTimestamp(unsigned char *uiTimestamp)
 
   std::cout.precision(8);
   std::cout << "Profile Count: " << uiProfileCount << " ShutterOpen: " << dShutterOpen
-            << " ShutterClose: " << dShutterClose << "\n";
+            << " ShutterClose: " << dShutterClose << " ShutterTime: " << (dShutterClose - dShutterOpen) * 1000.0 << "\n";
   std::cout.precision(6);
 }
+
 void Scanner::new_profile_callback(const void *data, size_t data_size)
 {
-  
   {
     boost::mutex::scoped_lock lock(mutex_);
-    if (data != NULL && data_size == SCANNER_RESOLUTION * fieldCount_ * container_size_ * 2)
+    if (data != NULL && data_size == SCANNER_RESOLUTION * fieldCount_ * config_.container_size * 2)
     {
       memcpy(&container_buffer_[0], data, data_size);
     }
@@ -313,14 +357,19 @@ void Scanner::new_profile_callback(const void *data, size_t data_size)
       // DisplayTimestamp(container_buffer_[i].timestamp);
       for (int j = 0; j < SCANNER_RESOLUTION; ++j)
       {
-        if (container_buffer_[i].z[j] != 0)
+        double x = ((container_buffer_[i].x[j] - (guint16)32768) * scaling_) / 1000.0;            // in meter
+        double z = ((container_buffer_[i].z[j] - (guint16)32768) * scaling_ + offset_) / 1000.0;  // in meter
+
+        if (container_buffer_[i].z[j] == 0)
         {
-          double x = ((container_buffer_[i].x[j] - (guint16)32768) * scaling_) / 1000.0;  // in meter
-          double z = ((container_buffer_[i].z[j] - (guint16)32768) * scaling_ + offset_) /
-                     1000.0;  // in meter
+          z = std::numeric_limits<double>::quiet_NaN();
+        }
+        if (!config_.dense || container_buffer_[i].z[j] != 0)
+        {
           profile->x.push_back(x);
           profile->z.push_back(z);
-        }
+          profile->intensity.push_back(container_buffer_[i].intensity[j]);
+          }
       }
 
       profile_queue_.push(profile);
@@ -387,21 +436,24 @@ bool Scanner::startScanning()
   // Extract only 1th reflection
   // Extract timestamp in extra field
 
-  if ((iRetValue = llt_.SetFeature(FEATURE_FUNCTION_REARRANGEMENT_PROFILE, 0x00120c03 | 9 << 12)) < GENERAL_FUNCTION_OK)
+  int rearrengement_value = CONTAINER_DATA_X | CONTAINER_DATA_Z | CONTAINER_DATA_INTENS | CONTAINER_DATA_TS |
+                            CONTAINER_DATA_EMPTYFIELD4TS | CONTAINER_STRIPE_1 | CONTAINER_DATA_LSBF | 9 << 12;
+  if ((iRetValue = llt_.SetFeature(FEATURE_FUNCTION_REARRANGEMENT_PROFILE, rearrengement_value)) < GENERAL_FUNCTION_OK)
   {
     std::cout << "Error during SetFeature(FEATURE_FUNCTION_REARRANGEMENT_PROFILE)";
     return false;
   }
 
   std::cout << "Set profile container size\n";
-  if ((iRetValue = llt_.SetProfileContainerSize(SCANNER_RESOLUTION * fieldCount_, container_size_)) <
+  container_buffer_.resize(config_.container_size);
+  if ((iRetValue = llt_.SetProfileContainerSize(SCANNER_RESOLUTION * fieldCount_, config_.container_size)) <
       GENERAL_FUNCTION_OK)
   {
     std::cout << "Error during SetProfileContainerSize";
     return false;
   }
 
-  setMeasuringField(field_.x_start, field_.x_size, field_.z_start, field_.z_size);
+  // setMeasuringField(field_.x_start, field_.x_size, field_.z_start, field_.z_size);
 
   // Setup transfer of multiple profiles
   if ((iRetValue = llt_.TransferProfiles(NORMAL_CONTAINER_MODE, true)) < GENERAL_FUNCTION_OK)
@@ -433,22 +485,15 @@ bool Scanner::stopScanning()
   return true;
 }
 
-Scanner::Scanner(TimeSync *time_sync, Notifyee *notifyee, unsigned int shutter_time, unsigned int idle_time,
-                 bool auto_shutter, unsigned int container_size, MeasurementField field, std::string serial_number,
+Scanner::Scanner(TimeSync *time_sync, Notifyee *notifyee, unsigned int container_size, std::string serial_number,
                  std::string path_to_device_properties)
-  : time_sync_(time_sync)
-  , notifyee_(notifyee)
-  , shutter_time_(shutter_time)
-  , idle_time_(idle_time)
-  , auto_shutter_(auto_shutter)
-  , container_size_(container_size)
-  , field_(field)
-  , serial_number_(serial_number)
+  : time_sync_(time_sync), notifyee_(notifyee), serial_number_(serial_number)
 {
   connected_ = false;
   scanning_ = false;
-  fieldCount_ = 3;
-  container_buffer_.resize(container_size_);
+  fieldCount_ = 4;
+  config_.container_size = container_size;
+  container_buffer_.resize(config_.container_size);
   path_to_device_properties_ = path_to_device_properties;
   path_to_device_properties_ += "/device_properties.dat";
   connect();
@@ -512,7 +557,8 @@ bool Scanner::reconnect()
 
 bool Scanner::setLaserPower(bool on)
 {
-  guint32 value = on ? 0x82000002 : 0x82000000;
+  int laser_value = config_.laser_pulse ? config_.laser_power | LASER_PULSMODE : config_.laser_power;
+  guint32 value = on ? laser_value : 0x82000000;
 
   if (llt_.SetFeature(FEATURE_FUNCTION_LASERPOWER, value) < GENERAL_FUNCTION_OK)
   {
@@ -521,36 +567,6 @@ bool Scanner::setLaserPower(bool on)
   }
 
   return true;
-}
-
-// Schreibkommando für seq. Register
-void Scanner::WriteCommand(unsigned int command, unsigned int data)
-{
-  static int toggle = 0;
-  llt_.SetFeature(FEATURE_FUNCTION_SHARPNESS, (unsigned int)(command << 9) + (toggle << 8) + data);
-  toggle = toggle ? 0 : 1;
-}
-// Schreibe Wert auf Registerposition
-void Scanner::WriteValue2Register(unsigned short value)
-{
-  WriteCommand(1, (unsigned int)(value / 256));
-  WriteCommand(1, (unsigned int)(value % 256));
-}
-
-void Scanner::setMeasuringField(ushort x_start, ushort x_size, ushort z_start, ushort z_size)
-{
-  // Aktiviere freies Messfeld
-  llt_.SetFeature(FEATURE_FUNCTION_MEASURINGFIELD, 0x82000800);
-  // Setze die gewünschte Messfeldgröße
-
-  WriteCommand(0, 0);  // Resetkommando
-  WriteCommand(0, 0);
-  WriteCommand(2, 8);
-  WriteValue2Register(z_start);
-  WriteValue2Register(z_size);
-  WriteValue2Register(x_start);
-  WriteValue2Register(x_size);
-  WriteCommand(0, 0);  // Beende Schreibvorgang
 }
 
 }  // namespace microepsilon_scancontrol

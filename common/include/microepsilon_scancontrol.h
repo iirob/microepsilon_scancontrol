@@ -41,12 +41,12 @@
 #ifndef _MICROEPSILON_SCANCONTROL_ROS_H_
 #define _MICROEPSILON_SCANCONTROL_ROS_H_
 
+#include <llt.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/mutex.hpp>
 #include <iostream>
 #include <queue>
 #include <vector>
-#include <llt.h>
 
 namespace microepsilon_scancontrol
 {
@@ -99,6 +99,7 @@ struct ScanProfile
 {
   guint16 z[SCANNER_RESOLUTION];
   guint16 x[SCANNER_RESOLUTION];
+  guint16 intensity[SCANNER_RESOLUTION];
   guint16 padding[SCANNER_RESOLUTION - 8];
   unsigned char timestamp[16];
 };
@@ -107,11 +108,47 @@ struct ScanProfileConverted
 {
   std::vector<double> x;
   std::vector<double> z;
+  std::vector<uint16_t> intensity;
   unsigned int profile_counter;
   double shutter_open;
   double shutter_close;
 };
 typedef boost::shared_ptr<ScanProfileConverted> ScanProfileConvertedPtr;
+
+struct ScannerConfig
+{
+  bool auto_shutter;
+  double shutter_time;
+  double frequency;
+  double field_left;
+  double field_right;
+  double field_far;
+  double field_near;
+  bool dense;
+  int laser_power;
+  bool laser_pulse;
+  double lag_compensation;
+  int reflection;
+  bool flip_x;
+  bool flip_z;
+  bool late_auto_shutter;
+  int shutter_alignment;
+  bool shutter_algorithm;
+  int peak_width_min;
+  int peak_width_max;
+  int peak_intensity_min;
+  int peak_intensity_max;
+  int threshold;
+  bool dynamic_threshold;
+  bool video_filter;
+  bool ambient_suppresion;
+  int average_filter;
+  int median_filter;
+  int resample;
+  bool resample_all;
+  bool interpolate;
+  int container_size;
+};
 
 class Scanner
 {
@@ -120,15 +157,11 @@ private:
   bool connected_;
   bool need_time_sync_;
 
-  unsigned int idle_time_;
-  unsigned int shutter_time_;
-  bool auto_shutter_;
-  unsigned int container_size_;
+  ScannerConfig config_;
   boost::mutex mutex_;
   unsigned int fieldCount_;
   TimeSync* time_sync_;
   Notifyee* notifyee_;
-  MeasurementField field_;
   std::string serial_number_, path_to_device_properties_;
 
   CInterfaceLLT llt_;
@@ -146,13 +179,9 @@ private:
   void new_profile_callback(const void* data, size_t data_size);
   static void control_lost_callback_wrapper(ArvGvDevice* gv_device, gpointer user_data);
   static void new_profile_callback_wrapper(const void* data, size_t data_size, gpointer user_data);
-  void setMeasuringField(ushort x_start, ushort x_size, ushort z_start, ushort z_size);
-  void WriteCommand(unsigned int command, unsigned int data);
-  void WriteValue2Register(unsigned short value);
 
 public:
-  Scanner(TimeSync* time_sync, Notifyee* notifyee, unsigned int shutter_time, unsigned int idle_time,
-          bool auto_shutter, unsigned int container_size, MeasurementField field, std::string serial_number,
+  Scanner(TimeSync* time_sync, Notifyee* notifyee, unsigned int container_size, std::string serial_number,
           std::string path_to_device_properties);
   ~Scanner();
 
@@ -162,6 +191,7 @@ public:
   bool stopScanning();
   bool setLaserPower(bool on);
   bool hasNewData();
+  void reconfigure(ScannerConfig config, bool restart);
   ScanProfileConvertedPtr getData();
 };
 
