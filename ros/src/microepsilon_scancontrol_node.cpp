@@ -71,10 +71,10 @@ public:
 
 private:
   void initialiseMessage();
-  bool laser_on(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res);
-  bool laser_off(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res);
+  bool laser_on(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
+  bool laser_off(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
 
-  void dynrec_callback(microepsilon_scancontrol::ScanControlConfig& config, uint32_t level);
+  void dynrec_callback(microepsilon_scancontrol::ScanControlConfig &config, uint32_t level);
 
   ros::Publisher scan_pub_;
   ros::Publisher meassured_z_pub_;
@@ -97,7 +97,7 @@ private:
 
 ScannerNode::ScannerNode(unsigned int container_size, std::string topic, std::string frame, std::string serial_number,
                          std::string path_to_device_properties)
-  : laser_(this, this, container_size, serial_number, path_to_device_properties), frame_(frame)
+    : laser_(this, this, container_size, serial_number, path_to_device_properties), frame_(frame)
 {
   scan_pub_ = nh_.advertise<sensor_msgs::PointCloud2>(topic, 500);
   meassured_z_pub_ = nh_.advertise<std_msgs::Float32MultiArray>("meassured_z", 50);
@@ -111,8 +111,8 @@ ScannerNode::ScannerNode(unsigned int container_size, std::string topic, std::st
 
 void ScannerNode::sync_time(unsigned int profile_counter, double shutter_open, double shutter_close)
 {
-  ROS_DEBUG("New Timestamp: %d %9f", profile_counter, average(shutter_open, shutter_close));
-  shutter_mid_sync_ = ros::Time::now() - ros::Time(average(shutter_open, shutter_close));
+  ROS_DEBUG("New Timestamp: %d %9f", profile_counter, shutter_close);
+  shutter_mid_sync_ = ros::Time::now() - ros::Time(shutter_close);
   last_second_ = 0;
 }
 
@@ -121,14 +121,14 @@ void ScannerNode::notify()
   publish();
 }
 
-bool ScannerNode::laser_off(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res)
+bool ScannerNode::laser_off(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res)
 {
-  publishing_ = false;
+  // publishing_ = false;
   return laser_.setLaserPower(false);
 }
-bool ScannerNode::laser_on(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res)
+bool ScannerNode::laser_on(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res)
 {
-  publishing_ = true;
+  // publishing_ = true;
   return laser_.setLaserPower(true);
 }
 
@@ -155,9 +155,10 @@ void ScannerNode::publish()
     sensor_msgs::PointCloud2Iterator<float> iter_y(cloud_msg_, "y");
     sensor_msgs::PointCloud2Iterator<uint16_t> iter_intensity(cloud_msg_, "intensity");
     ScanProfileConvertedPtr data = laser_.getData();
-    ros::Time profile_time(average(data->shutter_open, data->shutter_close));
+    ros::Time profile_time(data->shutter_close);
     if (profile_time.toSec() - last_second_ < 0)
     {
+      ROS_WARN_STREAM("Time overflow! profile time: " << profile_time.toSec() << " last_second: " << last_second_ << " shutter_mid_sync: " << shutter_mid_sync_);
       shutter_mid_sync_ += ros::Duration(128);
     }
     last_second_ = profile_time.toSec();
@@ -211,7 +212,7 @@ bool ScannerNode::reconnect()
   laser_.reconnect();
 }
 
-void ScannerNode::dynrec_callback(microepsilon_scancontrol::ScanControlConfig& config, uint32_t level)
+void ScannerNode::dynrec_callback(microepsilon_scancontrol::ScanControlConfig &config, uint32_t level)
 {
   laser_config_.auto_shutter = config.auto_shutter;
   laser_config_.shutter_time = config.shutter_time;
@@ -248,11 +249,11 @@ void ScannerNode::dynrec_callback(microepsilon_scancontrol::ScanControlConfig& c
   laser_.reconfigure(laser_config_, level);
 }
 
-}  // namespace microepsilon_scancontrol
+} // namespace microepsilon_scancontrol
 
 //#######################
 //#### main programm ####
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   ros::init(argc, argv, "microepsilon_scancontrol_node");
 
@@ -285,10 +286,7 @@ int main(int argc, char** argv)
     serial_number = "";
   }
 
-
-
   ROS_INFO("Profiles for each Container: %d", container_size);
-
 
   microepsilon_scancontrol::ScannerNode scanner(container_size, topic, frame, serial_number,
                                                 path_to_device_properties);
